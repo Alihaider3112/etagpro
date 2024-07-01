@@ -1,0 +1,124 @@
+@import 'antd/lib/style/reset.css';
+
+:root {
+  --primary-color: #0c66e4;
+  --primary-color-dark: #0052cc;
+  --secondary-color: #e5eaff; /*#e5f0ff*/
+  --border-radius: 6px;
+  --input-height: 48px;
+  --btn-height: 38px;
+  --color-muted: #9c9fa1;
+  --color-muted-2: #616f86;
+  --primaryColorHsl: 215;
+  --primary-color-soft: #cce0ff;
+  --black: #172b4d;
+  --nuetral: #091e420f;
+  --icon-color: #44546f;
+  --background-color-details: #fdfdfd;
+}
+
+html {
+  font-family: Inter, sans-serif;
+}
+
+a {
+  color: var(--primary-color);
+}
+
+.ant-input-affix-wrapper-lg {
+  height: var(--input-height) !important;
+}
+.ant-btn-primary {
+  background-color: var(--primary-color);
+  height: var(--input-height) !important;
+}
+
+.ant-switch-checked {
+  background-color: var(--primary-color) !important;
+}
+
+.ant-btn-primary.custom {
+  height: var(--btn-height) !important;
+}
+
+.ant-btn-primary:hover {
+  background-color: var(--primary-color-soft) !important ;
+  border-color: var(--primary-color-soft) !important ;
+}
+
+.ant-btn-default {
+  height: var(--btn-height) !important;
+}
+
+.ant-btn-default:hover {
+  border-color: var(--primary-color-soft) !important ;
+}
+
+.bg-primary {
+  background-color: var(--primary-color);
+}
+.bg-primary-details {
+  background-color: var(--background-color-details);
+}
+.text-primary {
+  color: var(--primary-color);
+}
+.bg-secondary {
+  background-color: var(--secondary-color) !important;
+}
+.border-primary {
+  border-color: var(--primary-color) !important;
+}
+.border-top-1 {
+  border-top: 1px solid #000;
+}
+
+.text-muted {
+  color: var(--color-muted);
+}
+
+.bg-primary-selected {
+  border-color: var(--primary-color) !important;
+  background-color: var(--secondary-color) !important;
+}
+
+.btn-blue {
+  background: #dcdef9;
+  padding: 11px;
+  border-radius: 12px;
+  height: 100%;
+  color: #1c2dd8;
+  border-color: #dcdef9;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.ant-color-picker-trigger:hover {
+  border-color: var(--primary-color) !important ;
+}
+
+.background-transparent {
+  background-color: transparent !important;
+}
+
+@keyframes shake {
+  0% {
+    margin-left: 0;
+  }
+  25% {
+    margin-left: 0.5rem;
+  }
+  75% {
+    margin-left: -0.5rem;
+  }
+  100% {
+    margin-left: 0;
+  }
+}
+
+h1,
+h2,
+h3,
+h4 {
+  color: var(--black);
+}
