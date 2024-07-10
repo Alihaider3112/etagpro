@@ -1,95 +1,104 @@
 import PageHeader from '@/components/common/PageHeader';
 import Protected from '@/layouts/Protected';
-import { Table, Button, Modal, Form, Select, Input } from 'antd';
-import { useState } from 'react';
+import { Table, Button, Modal, Form, Select, Input, message } from 'antd';
+import { useState, useEffect } from 'react';
+import useFetch from '@/hooks/useFetch';
+import axios from 'axios';
 
 export default function Products() {
   const [form] = Form.useForm();
+  const [data, setData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const [dataSource, setDataSource] = useState([
-    {
-      key: '1',
-      no: '1',
-      company: 'Hp',
-      srno: '4325',
-      model: '2017',
-    },
-    {
-      key: '2',
-      no: '2',
-      company: 'Mac',
-      srno: '4326',
-      model: '2018',
-    },
-    {
-      key: '3',
-      no: '3',
-      company: 'Lenovo',
-      srno: '4326',
-      model: '2019',
-    },
-  ]);
-
-  //Filters to filter table data on selection 
-
-  const [filteredDataSource, setFilteredDataSource] = useState(dataSource);
+  const { data: fetchData, loading, error } = useFetch('/api/product');
+  const { data: brandsData, loading: brandsLoading } = useFetch('/api/brand');
+  const { data: companiesData, loading: companiesLoading } = useFetch('/api/companies');
+  const [filteredBrandsData, setFilteredBrandsData] = useState([]);
+  const [filteredDataSource, setFilteredDataSource] = useState([]);
   const [filters, setFilters] = useState({ company: '', model: '', srno: '' });
- //Table Columns
+
   const columns = [
     {
       title: 'No',
-      dataIndex: 'no',
-      key: 'no',
+      dataIndex: 'brand_id',
+      key: 'brand_id',
     },
     {
       title: 'Company',
-      dataIndex: 'company',
-      key: 'company',
+      dataIndex: 'company_name',
+      key: 'company_name',
     },
     {
       title: 'Sr.No',
-      dataIndex: 'srno',
-      key: 'srno',
+      dataIndex: 'serial_number',
+      key: 'serial_number',
     },
     {
       title: 'Model',
-      dataIndex: 'model',
-      key: 'model',
+      dataIndex: 'brand_name',
+      key: 'brand_name',
     },
   ];
 
+  useEffect(() => {
+    if (fetchData) {
+      setData(fetchData);
+      setFilteredDataSource(fetchData);
+    }
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (brandsData && brandsData.length > 0) {
+      setFilteredBrandsData(brandsData);
+    }
+  }, [brandsData]);
+
   const showModal = () => {
-    const nextno = dataSource.length + 1;
-    form.setFieldsValue({ no: `${nextno}` });
     setIsModalOpen(true);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    form.resetFields();
   };
 
   const onFinishFailed = (errorInfo) => {
     console.log('Failed:', errorInfo);
   };
 
-  const onFinish = (values) => {
-    const newData = {
-      key: `${dataSource.length + 1}`,
-      company: values.company,
-      model: values.model,
-      srno: values.srno,
-      no: `${dataSource.length + 1}`,
-    };
-    const newDataSource = [...dataSource, newData];
-    setDataSource(newDataSource);
-    setFilteredDataSource(filterData(newDataSource, filters));
-    setIsModalOpen(false);
-    form.resetFields();
+  const onFinish = async (values) => {
+    try {
+      const { brand_name, brand_id, serial_number, company_name, company_id } = values;
+      const brand = filteredBrandsData.find(b => b.name === brand_name);
+      const company = companiesData.find(c => c.name === company_name);
+
+      const newProduct = {
+        brand_name,
+        brand_id: brand?._id,
+        serial_number,
+        company_name,
+        company_id: company?._id,
+      };
+      console.log(newProduct)
+
+      const response = await axios.post('/api/product', newProduct);
+      
+      const savedProduct = response.data.result;
+      setData([...data, savedProduct]);
+      setFilteredDataSource([...data, savedProduct]);
+      setIsModalOpen(false);
+      form.resetFields();
+      message.success('Product added successfully');
+    } catch (error) {
+      message.error('Failed to submit product');
+    }
   };
 
   const filterData = (data, filters) => {
     return data.filter((item) => {
       return (
-        (filters.company ? item.company === filters.company : true) &&
-        (filters.model ? item.model === filters.model : true) &&
-        (filters.srno ? item.srno === filters.srno : true)
+        (filters.company ? item.company_name === filters.company : true) &&
+        (filters.model ? item.brand_name === filters.model : true) &&
+        (filters.srno ? item.serial_number === filters.srno : true)
       );
     });
   };
@@ -97,8 +106,11 @@ export default function Products() {
   const handleFilterChange = (changedValues) => {
     const newFilters = { ...filters, ...changedValues };
     setFilters(newFilters);
-    setFilteredDataSource(filterData(dataSource, newFilters));
+    setFilteredDataSource(filterData(data, newFilters));
   };
+
+  if (loading || brandsLoading || companiesLoading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error.message}</p>;
 
   return (
     <>
@@ -110,43 +122,33 @@ export default function Products() {
       <div className="w-11/12 m-auto justify-center mt-7">
         <div className='grid grid-cols-4 gap-3'>
           <div>
-            <Select 
-            className='w-64'
+            <Select
+              className='w-64'
               showSearch
               placeholder="Select Company name"
               onChange={(value) => handleFilterChange({ company: value })}
               filterOption={(input, option) =>
                 (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
               }
-              options={[
-                { value: 'Mac', label: 'Mac' },
-                { value: 'Lenovo', label: 'Lenovo' },
-                { value: 'Hp', label: 'Hp' },
-                { value: 'Dell', label: 'Dell' },
-              ]}
+              options={companiesData ? companiesData.map(company => ({ value: company.name, label: company.name })) : []}
             />
           </div>
           <div>
             <Select
-            className='w-64'
+              className='w-64'
               showSearch
               placeholder="Select Model name"
               onChange={(value) => handleFilterChange({ model: value })}
               filterOption={(input, option) =>
                 (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
               }
-              options={[
-                { value: '2018', label: '2018' },
-                { value: '2019', label: '2019' },
-                { value: '2017', label: '2017' },
-                { value: '2016', label: '2016' },
-              ]}
+              options={filteredBrandsData ? filteredBrandsData.map(brand => ({ value: brand.name, label: brand.name })) : []}
             />
           </div>
           <div>
             <Input
-              className="h-8 text-center rounded-md "
-              placeholder='serial number'
+              className="h-8 text-center rounded-md"
+              placeholder='Serial number'
               onChange={(e) => handleFilterChange({ srno: e.target.value })}
             />
           </div>
@@ -156,8 +158,8 @@ export default function Products() {
             </Button>
           </div>
         </div>
-        <Table dataSource={filteredDataSource} columns={columns} />
-        <Modal className='w-1/3 h-24 text-center ' title="Add Product" open={isModalOpen} onCancel={() => setIsModalOpen(false)} footer={null}>
+        <Table dataSource={filteredDataSource} columns={columns} rowKey="_id" />
+        <Modal className='w-1/3 h-24 text-center' title="Add Product" open={isModalOpen} onCancel={handleCancel} footer={null}>
           <Form
             form={form}
             name="basic"
@@ -171,7 +173,7 @@ export default function Products() {
           >
             <Form.Item
               label={<span className="pt-1 block w-full">Company</span>}
-              name="company"
+              name="company_name"
               rules={[{ required: true, message: 'Select the company name!' }]}
             >
               <Select
@@ -180,19 +182,14 @@ export default function Products() {
                 filterOption={(input, option) =>
                   (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                 }
-                options={[
-                  { value: 'Mac', label: 'Mac' },
-                  { value: 'Lenovo', label: 'Lenovo' },
-                  { value: 'Hp', label: 'Hp' },
-                  { value: 'Dell', label: 'Dell' },
-                ]}
+                options={companiesData ? companiesData.map(company => ({ value: company.name, label: company.name })) : []}
               />
             </Form.Item>
 
             <Form.Item
               label={<span className="pt-1 block w-full">Model</span>}
-              name="model"
-              rules={[{ required: true, message: 'Select the Model name!' }]}
+              name="brand_name"
+              rules={[{ required: true, message: 'Select the model name!' }]}
             >
               <Select
                 showSearch
@@ -200,17 +197,13 @@ export default function Products() {
                 filterOption={(input, option) =>
                   (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
                 }
-                options={[
-                  { value: '2018', label: '2018' },
-                  { value: '2019', label: '2019' },
-                  { value: '2017', label: '2017' },
-                  { value: '2016', label: '2016' },
-                ]}
+                options={filteredBrandsData ? filteredBrandsData.map(brand => ({ value: brand.name, label: brand.name })) : []}
               />
             </Form.Item>
+
             <Form.Item
               label={<span className="pt-1 block w-full">Sr.no</span>}
-              name="srno"
+              name="serial_number"
               rules={[{ required: true, message: 'Please input the serial number!' }]}
             >
               <Input className="h-8" />

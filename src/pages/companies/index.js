@@ -1,60 +1,57 @@
-import React, { useState } from 'react';
-import { Table, Button, Modal, Form, Input } from "antd";
 import PageHeader from '@/components/common/PageHeader';
 import Protected from '@/layouts/Protected';
+import { Table, Button, Modal, Form, Input, message } from 'antd';
+import { useState, useEffect } from 'react';
+import axios from 'axios';
+import useFetch from '@/hooks/useFetch';
 
 export default function Companies() {
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [dataSource, setDataSource] = useState([
-    {
-      key: '1',
-      name: 'Dell',
-      id: '1',
-    },
-    {
-      key: '2',
-      name: 'HP',
-      id: '2',
-    },
-    {
-      key: '3',
-      name: 'Lenovo',
-      id: '3',
-    },
-  ]);
-
   const [form] = Form.useForm();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { data: fetchedData, error, loading } = useFetch('/api/companies');
+  const [data, setData] = useState([]);
 
-  const showModal = () => {
-    const nextId = dataSource.length + 1;
-    form.setFieldsValue({ id: `${nextId}` });
-    setIsModalOpen(true);
-  }
+  useEffect(() => {
+    if (fetchedData) {
+      setData(fetchedData);
+    }
+  }, [fetchedData]);
 
-  const onFinish = (values) => {
-    const newData = {
-      key: `${dataSource.length + 1}`,
-      name: values.name,
-      id: values.id,
-    };
-    setDataSource([...dataSource, newData]);
-    setIsModalOpen(false);
-    form.resetFields();
+   
+
+  const addCompany = async (company) => {
+    try {
+      const response = await axios.post('/api/companies', company);
+      const newDataSource = [...data, response.data.result];
+      setData(newDataSource);
+      setIsModalOpen(false);
+     
+      form.resetFields();
+      message.success('Company added successfully');
+    } catch (error) {
+      message.error('Failed to add company');
+    }
   };
 
-  const onFinishFailed = (errorInfo) => {
-    console.log('Failed:', errorInfo);
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const onFinish = (values) => {
+    const newCompany = {
+      name: values.name,
+    };
+    addCompany(newCompany);
   };
 
   const columns = [
     {
-      title: 'Id',
-      dataIndex: 'id',
-      key: 'id',
+      title: 'No',
+      dataIndex: '_id',
+      key: '_id',
     },
     {
-      title: 'Name',
+      title: 'Company',
       dataIndex: 'name',
       key: 'name',
     },
@@ -67,48 +64,40 @@ export default function Companies() {
           pageTitle: 'Companies',
         }}
       />
-      <div className="w-11/12 m-auto justify-center mt-7">
+      <div className="w-11/12 m-auto justify-center mt-7 w-full">
         <div className="flex mb-6 justify-end items-center">
-          <Button className='h-8 text-center p-auto' onClick={showModal} type='primary'>Add New Company</Button>
+          <Button className="h-8 text-center p-auto" onClick={showModal} type="primary">
+            Create Company
+          </Button>
         </div>
-        <Table dataSource={dataSource} columns={columns} pagination={false}/>
+       
+        <Table dataSource={data} columns={columns} loading={loading} rowKey="_id" />
+        <Modal className='w-1/3 h-24 text-center ' title="Add Company" open={isModalOpen} onCancel={() => setIsModalOpen(false)} footer={null}>
+          <Form
+            form={form}
+            name="basic"
+            style={{ maxWidth: 600 }}
+            initialValues={{ remember: true }}
+            onFinish={onFinish}
+            autoComplete="off"
+            labelCol={{ span: 8 }}
+            wrapperCol={{ span: 16 }}
+          >
+            <Form.Item
+              label="Company"
+              name="name"
+              rules={[{ required: true, message: 'Please input the company name!' }]}
+            >
+              <Input />
+            </Form.Item>
+            <Form.Item wrapperCol={{ offset: 10, span: 4 }}>
+              <Button className="h-10 w-20" type="primary" htmlType="submit" style={{ border: 'none' }}>
+                Submit
+              </Button>
+            </Form.Item>
+          </Form>
+        </Modal>
       </div>
-      <Modal className='w-1/3 h-24 text-center' title="Add a New Company" open={isModalOpen} onCancel={() => setIsModalOpen(false)} footer={null}>
-        <Form
-          form={form}
-          name="basic"
-          style={{ maxWidth: 600 }}
-          initialValues={{ remember: true }}
-          onFinish={onFinish}
-          onFinishFailed={onFinishFailed}
-          autoComplete="off"
-          labelCol={{ span: 8 }}
-          wrapperCol={{ span: 16 }}
-        >
-          <Form.Item
-            label={<span className="pt-1 block w-full">Company Name</span>}
-            name="name"
-            rules={[{ required: true, message: 'Please input the company name!' }]}
-          >
-            <Input  className='h-8'/>
-          </Form.Item>
-
-          <Form.Item
-            name="id"
-            hidden
-          >
-            <Input />
-          </Form.Item>
-
-          <Form.Item
-            wrapperCol={{ offset: 10, span: 4 }}
-          >
-            <Button className='h-10 w-20' type="primary" htmlType="submit">
-              Submit
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
     </>
   );
 }

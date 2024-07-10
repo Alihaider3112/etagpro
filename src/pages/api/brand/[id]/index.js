@@ -1,57 +1,56 @@
-import  connect  from '../../../../connection/index';
+import connect from '../../../../connection/index';
 import Brand from '../../../../models/brand';
 
 export default async function handler(req, res) {
     await connect();
 
-    if (req.method === 'GET') {
-        const { id } = req.query; 
-        // console.log(id);
-        try {
-            const brand = await Brand.findById(id);
-            // console.log(company);
-            if (!brand) {
-                return res.status(404).json({ message: 'Brand not found' });
-            }
-            res.status(200).json({ message: 'ok', brand });
-        } catch (error) {
-            res.status(400).json({ message: 'error', error });
-        }
-    } 
-    else if (req.method === 'PUT') {
-       const { name,company_name,company_id } = req.body;
-       const { id } = req.query; 
-        try {
-        const updatedBrand = await Brand.findByIdAndUpdate(id, {
-               name: name,
-               company_name:company_name,
-               company_id:company_id,
-               updated_by:"Asad",
-               updated_at:Date.now(),
-        }, { new: true }); 
-          if (!updatedBrand) {
-             return res.status(404).json({ message: 'Brand not found' });
-            }
-            res.status(200).json({ message: 'Brand updated successfully', Brand: updatedBrand });
-     } catch (error) {
-        res.status(400).json({ message: 'Error updating Brand', error });
-    }
-    } else if(req.method === 'DELETE') {
-        const { id } = req.query;
+    const { method } = req;
+    const { id } = req.query;
 
-        try {
-            const deletedBrand = await Brand.findByIdAndDelete(id);
-            if (!deletedBrand) {
-                return res.status(404).json({ message: 'Brand not found' });
+    switch (method) {
+        case 'GET':
+            try {
+                const brand = await Brand.findById(id);
+                if (!brand) {
+                    return res.status(404).json({ message: 'Brand not found' });
+                }
+                res.status(200).json({ message: 'ok', brand });
+            } catch (error) {
+                console.error('Error fetching brand:', error);
+                res.status(500).json({ message: 'Server Error', error: error.message });
             }
-            res.status(200).json({ message: 'Brand deleted successfully', Brand: deletedBrand });
-        } catch (error) {
-            res.status(400).json({ message: 'Error deleting Brand', error });
-        }
-    } 
-    else {
-        res.setHeader('Allow', ['GET']);
-        res.status(405).end(`Method ${req.method} Not Allowed`);
+            break;
+        case 'PUT':
+            try {
+                const { name, company_name, company_id } = req.body;
+                const updatedBrand = await Brand.findByIdAndUpdate(
+                    id,
+                    { name, company_name, company_id, updated_by: "Asad", updated_at: Date.now() },
+                    { new: true }
+                );
+                if (!updatedBrand) {
+                    return res.status(404).json({ message: 'Brand not found' });
+                }
+                res.status(200).json({ message: 'Brand updated successfully', brand: updatedBrand });
+            } catch (error) {
+                console.error('Error updating brand:', error);
+                res.status(500).json({ message: 'Error updating Brand', error: error.message });
+            }
+            break;
+        case 'DELETE':
+            try {
+                const deletedBrand = await Brand.findByIdAndDelete(id);
+                if (!deletedBrand) {
+                    return res.status(404).json({ message: 'Brand not found' });
+                }
+                res.status(200).json({ message: 'Brand deleted successfully', brand: deletedBrand });
+            } catch (error) {
+                console.error('Error deleting brand:', error);
+                res.status(500).json({ message: 'Error deleting Brand', error: error.message });
+            }
+            break;
+        default:
+            res.setHeader('Allow', ['GET', 'PUT', 'DELETE']);
+            res.status(405).end(`Method ${method} Not Allowed`);
     }
-    
 }

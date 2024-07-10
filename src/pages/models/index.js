@@ -1,61 +1,98 @@
-import React, { useState } from 'react';
-import { Table, Button, Modal, Form, Input, Select } from "antd";
+import React, { useState, useEffect } from 'react';
+import { Table, Button, Modal, Form, Input, Select, message } from 'antd';
 import PageHeader from '@/components/common/PageHeader';
 import Protected from '@/layouts/Protected';
-
+import useFetch from '@/hooks/useFetch';
+import axios from 'axios';
 
 export default function Models() {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [dataSource, setDataSource] = useState([
-    {
-      key: '1',
-      name: 'Dell',
-      model: '2016',
-      id: '1',
-    },
-    {
-      key: '2',
-      name: 'HP',
-      model: '2018',
-      id: '2',
-    },
-    {
-      key: '3',
-      name: 'Lenovo',
-      model: '2019',
-      id: '3',
-    },
-  ]);
-
+  const [isUpdate, setIsUpdate] = useState(false);
   const [form] = Form.useForm();
+  const [data, setData] = useState([]);
+  const { data: fetchedData, error, loading, revalidate } = useFetch('/api/brand');
+  const [currentModel, setCurrentModel] = useState(null);
+  const [companies, setCompanies] = useState([]);
+  const { data: companiesData, loading: companiesLoading } = useFetch('/api/companies');
+
+  useEffect(() => {
+    if (fetchedData) {
+      setData(fetchedData);
+    }
+  }, [fetchedData]);
+
+  useEffect(() => {
+    if (companiesData && companiesData.length > 0) {
+      setCompanies(companiesData);
+    }
+  }, [companiesData]);
 
   const showModal = () => {
-    const nextId = dataSource.length + 1;
-    form.setFieldsValue({ id: `${nextId}` });
     setIsModalOpen(true);
-  }
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    setIsUpdate(false);
+    setCurrentModel(null);
+    form.resetFields();
+  };
+
+  const handleUpdate = (record) => {
+    setIsUpdate(true);
+    setCurrentModel(record);
+    form.setFieldsValue({
+      _id: record._id,
+      name: record.name,
+      company_name: record.company_name,
+      company_id: record.company_id,
+    });
+    setIsModalOpen(true);
+  };
+
+  const onFinish = async (values) => {
+    try {
+      let response;
+      if (isUpdate && currentModel) {
+        const { name, company_name } = values;
+        const company = companiesData.find(c => c.name === company_name);
+        const updatedModel = {
+          ...values,
+          company_id: company?._id,
+        };
+        response = await axios.put(`/api/brand/${currentModel._id}`, updatedModel);
+        const updatedData = data.map(item => (item._id === currentModel._id ? response.data.brand : item));
+        setData(updatedData);
+        message.success('Model updated successfully');
+      } else {
+        const { name, company_name } = values;
+        const company = companiesData.find(c => c.name === company_name);
+        const newModel = {
+          name,
+          company_name,
+          company_id: company?._id,
+        };
+        response = await axios.post('/api/brand', newModel);
+        const savedModel = response.data.result;
+        setData([...data, savedModel]);
+        message.success('Model added successfully');
+      }
+      setIsModalOpen(false);
+      form.resetFields();
+    } catch (error) {
+      message.error('Failed to submit model');
+    }
+  };
 
   const onFinishFailed = (errorInfo) => {
     console.log('Failed:', errorInfo);
   };
 
-  const onFinish = (values) => {
-    const newData = {
-      key: `${dataSource.length + 1}`,
-      name: values.company,
-      model: values.model,
-      id: `${dataSource.length + 1}`,
-    };
-    setDataSource([...dataSource, newData]);
-    setIsModalOpen(false);
-    form.resetFields();
-  };
-
   const columns = [
     {
       title: 'Id',
-      dataIndex: 'id',
-      key: 'id',
+      dataIndex: '_id',
+      key: '_id',
     },
     {
       title: 'Name',
@@ -63,9 +100,18 @@ export default function Models() {
       key: 'name',
     },
     {
-      title: 'Model',
-      dataIndex: 'model',
-      key: 'model',
+      title: 'Company',
+      dataIndex: 'company_name',
+      key: 'company_name',
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <Button type="link" onClick={() => handleUpdate(record)}>
+          Update
+        </Button>
+      ),
     },
   ];
 
@@ -80,9 +126,20 @@ export default function Models() {
         <div className="flex mb-6 justify-end items-center">
           <Button className='h-8 text-center p-auto' onClick={showModal} type='primary'>Add New Model</Button>
         </div>
-        <Table dataSource={dataSource} columns={columns} />
+        <Table
+          dataSource={data}
+          columns={columns}
+          rowKey="_id"
+          loading={loading || companiesLoading}
+        />
       </div>
-      <Modal className='w-1/3 h-24 text-center' title="Add a New Model" open={isModalOpen} onCancel={() => setIsModalOpen(false)} footer={null}>
+      <Modal
+        className='w-1/3 h-24 text-center'
+        title={isUpdate ? "Update Model" : "Add a New Model"}
+        open={isModalOpen}
+        onCancel={handleCancel}
+        footer={null}
+      >
         <Form
           form={form}
           name="basic"
@@ -96,7 +153,7 @@ export default function Models() {
         >
           <Form.Item
             label={<span className="pt-1 block w-full">Model</span>}
-            name="model"
+            name="name"
             rules={[{ required: true, message: 'Please input the model name!' }]}
           >
             <Input className='h-8' />
@@ -104,7 +161,7 @@ export default function Models() {
 
           <Form.Item
             label={<span className="pt-1 block w-full">Company</span>}
-            name="company"
+            name="company_name"
             rules={[{ required: true, message: 'Please select the company!' }]}
           >
             <Select
@@ -113,19 +170,15 @@ export default function Models() {
               filterOption={(input, option) =>
                 (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
               }
-              options={[
-                { value: 'Mac', label: 'Mac' },
-                { value: 'Lenovo', label: 'Lenovo' },
-                { value: 'Hp', label: 'Hp' },
-                { value: 'Dell', label: 'Dell' },
-              ]}
+              options={companiesData ? companiesData.map(company => ({ value: company.name, label: company.name })) : []}
             />
           </Form.Item>
 
           <Form.Item
             wrapperCol={{ offset: 10, span: 4 }}
           >
-            <Button className='h-10 w-20' type="primary" htmlType="submit" style={{ border: 'none' }}>
+            <Button className='h-10 w-20' type="primary" htmlType="submit"
+ style={{ border: 'none' }}>
               Submit
             </Button>
           </Form.Item>

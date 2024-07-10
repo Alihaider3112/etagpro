@@ -5,7 +5,7 @@ import {
   message,
 } from 'antd'
 
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/v1' // will move to read via process env
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/products' // will move to read via process env
 const api = axios.create({
   baseURL: API_URL,
   headers: {

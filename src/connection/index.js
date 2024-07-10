@@ -1,4 +1,3 @@
- 
 import mongoose from 'mongoose';
 // mongodb://127.0.0.1:27017/etagpro
 export const connect = async () => {
