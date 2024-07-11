@@ -119,7 +119,7 @@ export default function Products() {
           pageTitle: 'Products',
         }}
       />
-      <div className="w-11/12 m-auto justify-center mt-7">
+      <div  className="w-11/12 m-auto justify-center mt-7">
         <div className='grid grid-cols-4 gap-3'>
           <div>
             <Select

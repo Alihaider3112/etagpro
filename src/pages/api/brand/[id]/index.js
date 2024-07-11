@@ -32,7 +32,7 @@ export default async function handler(req, res) {
                 if (!updatedBrand) {
                     return res.status(404).json({ message: 'Brand not found' });
                 }
-                res.status(200).json({ message: 'Brand updated successfully', result: updatedBrand });
+                res.status(200).json({ message: 'Brand updated successfully', brand: updatedBrand });
             } catch (error) {
                 console.error('Error updating brand:', error);
                 res.status(500).json({ message: 'Error updating Brand', error: error.message });
