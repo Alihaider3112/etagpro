@@ -158,7 +158,7 @@ export default function Products() {
             </Button>
           </div>
         </div>
-        <Table dataSource={filteredDataSource} columns={columns} rowKey="_id" />
+        <Table dataSource={filteredDataSource}  pagination={{ defaultPageSize: 10, hideOnSinglePage: true }} columns={columns} rowKey="_id" />
         <Modal className='w-1/3 h-24 text-center' title="Add Product" open={isModalOpen} onCancel={handleCancel} footer={null}>
           <Form
             form={form}

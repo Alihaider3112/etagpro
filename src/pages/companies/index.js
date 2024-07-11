@@ -71,7 +71,7 @@ export default function Companies() {
           </Button>
         </div>
        
-        <Table dataSource={data} columns={columns} loading={loading} rowKey="_id" />
+        <Table dataSource={data} columns={columns} pagination={{ defaultPageSize: 10, hideOnSinglePage: true }} loading={loading} rowKey="_id" />
         <Modal className='w-1/3 h-24 text-center ' title="Add Company" open={isModalOpen} onCancel={() => setIsModalOpen(false)} footer={null}>
           <Form
             form={form}

@@ -8,24 +8,19 @@ import axios from 'axios';
 export default function Models() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdate, setIsUpdate] = useState(false);
+  const [currentModel, setCurrentModel] = useState(null);
   const [form] = Form.useForm();
   const [data, setData] = useState([]);
-  const { data: fetchedData, error, loading, revalidate } = useFetch('/api/brand');
-  const [currentModel, setCurrentModel] = useState(null);
-  const [companies, setCompanies] = useState([]);
+  const { data: fetchedData, loading } = useFetch('/api/brand');
   const { data: companiesData, loading: companiesLoading } = useFetch('/api/companies');
+  console.log('Fetched Data:', fetchedData); 
 
   useEffect(() => {
     if (fetchedData) {
-      setData(fetchedData);
+      setData(fetchedData);  
+      console.log('Fetched Data:', fetchedData); 
     }
   }, [fetchedData]);
-
-  useEffect(() => {
-    if (companiesData && companiesData.length > 0) {
-      setCompanies(companiesData);
-    }
-  }, [companiesData]);
 
   const showModal = () => {
     setIsModalOpen(true);
@@ -33,16 +28,15 @@ export default function Models() {
 
   const handleCancel = () => {
     setIsModalOpen(false);
+    form.resetFields();
     setIsUpdate(false);
     setCurrentModel(null);
-    form.resetFields();
   };
 
   const handleUpdate = (record) => {
     setIsUpdate(true);
     setCurrentModel(record);
     form.setFieldsValue({
-      _id: record._id,
       name: record.name,
       company_name: record.company_name,
       company_id: record.company_id,
@@ -54,32 +48,26 @@ export default function Models() {
     try {
       let response;
       if (isUpdate && currentModel) {
-        const { name, company_name } = values;
-        const company = companiesData.find(c => c.name === company_name);
-        const updatedModel = {
-          ...values,
-          company_id: company?._id,
-        };
+        const { name, company_name, company_id } = values;
+        const updatedModel = { name, company_name, company_id };
         response = await axios.put(`/api/brand/${currentModel._id}`, updatedModel);
         const updatedData = data.map(item => (item._id === currentModel._id ? response.data.brand : item));
         setData(updatedData);
+        console.log('Updated Model:', response.data.brand); 
         message.success('Model updated successfully');
       } else {
-        const { name, company_name } = values;
-        const company = companiesData.find(c => c.name === company_name);
-        const newModel = {
-          name,
-          company_name,
-          company_id: company?._id,
-        };
+        const { name, company_name, company_id } = values;
+        const newModel = { name, company_name, company_id };
         response = await axios.post('/api/brand', newModel);
-        const savedModel = response.data.result;
-        setData([...data, savedModel]);
+        setData([...data, response.data.result]); 
         message.success('Model added successfully');
       }
       setIsModalOpen(false);
       form.resetFields();
+      setIsUpdate(false);
+      setCurrentModel(null);
     } catch (error) {
+      console.error('Error in onFinish:', error);  
       message.error('Failed to submit model');
     }
   };
@@ -130,12 +118,13 @@ export default function Models() {
           dataSource={data}
           columns={columns}
           rowKey="_id"
+          pagination={{ defaultPageSize: 10, hideOnSinglePage: true }}
           loading={loading || companiesLoading}
         />
       </div>
       <Modal
         className='w-1/3 h-24 text-center'
-        title={isUpdate ? "Update Model" : "Add a New Model"}
+        title={isUpdate ? 'Update Model' : 'Add a New Model'}
         open={isModalOpen}
         onCancel={handleCancel}
         footer={null}
@@ -177,8 +166,7 @@ export default function Models() {
           <Form.Item
             wrapperCol={{ offset: 10, span: 4 }}
           >
-            <Button className='h-10 w-20' type="primary" htmlType="submit"
- style={{ border: 'none' }}>
+            <Button className='h-10 w-20' type="primary" htmlType="submit" style={{ border: 'none' }}>
               Submit
             </Button>
           </Form.Item>

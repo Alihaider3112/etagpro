@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 const { Schema } = mongoose;
 
 
-const productSchema =new Schema({
+const productSchema = new Schema({
     brand_name: String, 
     brand_id: {
         type: Schema.Types.ObjectId,
@@ -16,4 +16,5 @@ const productSchema =new Schema({
     company_name:String,
     company_id:String,
 })
-module.exports = mongoose.model.productSchema|| mongoose.model('product', productSchema);
+console.log('>>>>>>>>>.......', mongoose.models)
+module.exports = mongoose.models.product || mongoose.model('product', productSchema);
