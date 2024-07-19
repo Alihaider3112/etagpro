@@ -7,7 +7,10 @@ export default function Navbar({ isMobile }) {
   const route = useRouter()
   const { pathname } = route
 
-  // TODO: move to separate file with component
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+  };
+
   const navigation = [
     {
       id: '1',
@@ -15,7 +18,7 @@ export default function Navbar({ isMobile }) {
       href: '#',
       url: '/products',
       icon: 'Warehouse',
-      current: pathname.includes('/products') // there's got to be the better way
+      current: pathname.includes('/products') 
     },
     {
       id: '2',
@@ -23,15 +26,15 @@ export default function Navbar({ isMobile }) {
       href: '#',
       url: '/models',
       icon: 'Component',
-      current: pathname.includes('/models') // there's got to be the better way
-    },
+      current: pathname.includes('/models') 
+          },
     {
       id: '3',
       name: 'Companies',
       href: '#',
       url: '/companies',
       icon: 'Hexagon',
-      current: pathname.includes('/companies') // there's got to be the better way
+      current: pathname.includes('/companies') 
     }
   ]
 
