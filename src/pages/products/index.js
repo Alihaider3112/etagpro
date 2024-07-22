@@ -2,19 +2,21 @@ import PageHeader from '@/components/common/PageHeader';
 import Protected from '@/layouts/Protected';
 import { Table, Button, Modal, Form, Select, Input, message } from 'antd';
 import { useState, useEffect } from 'react';
-import useFetch from '@/hooks/useFetch';
+import useFetch from '@/hooks/common/useFetch';
 import axios from 'axios';
-
-export default function Products() {
+import { useRouter } from 'next/router';
+import withAuth from '@/hooks/common/withauth';
+ function Products() {
+  const router = useRouter();
   const [form] = Form.useForm();
   const [data, setData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { data: fetchData, loading, error } = useFetch('/api/product');
-  const { data: brandsData, loading: brandsLoading } = useFetch('/api/brand');
-  const { data: companiesData, loading: companiesLoading } = useFetch('/api/companies');
   const [filteredBrandsData, setFilteredBrandsData] = useState([]);
   const [filteredDataSource, setFilteredDataSource] = useState([]);
   const [filters, setFilters] = useState({ company: '', model: '', srno: '' });
+  const { data: fetchData, loading, error } = useFetch('/api/product');
+  const { data: brandsData, loading: brandsLoading } = useFetch('/api/brand');
+  const { data: companiesData, loading: companiesLoading } = useFetch('/api/companies');
 
   const columns = [
     {
@@ -67,7 +69,7 @@ export default function Products() {
 
   const onFinish = async (values) => {
     try {
-      const { brand_name, brand_id, serial_number, company_name, company_id } = values;
+      const { brand_name, serial_number, company_name } = values;
       const brand = filteredBrandsData.find(b => b.name === brand_name);
       const company = companiesData.find(c => c.name === company_name);
 
@@ -78,9 +80,11 @@ export default function Products() {
         company_name,
         company_id: company?._id,
       };
-      console.log(newProduct)
 
-      const response = await axios.post('/api/product', newProduct);
+      const token = localStorage.getItem('authToken');
+      const response = await axios.post('/api/product', newProduct, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
       
       const savedProduct = response.data.result;
       setData([...data, savedProduct]);
@@ -113,6 +117,7 @@ export default function Products() {
   if (error) return <p>Error: {error.message}</p>;
 
   return (
+    <Protected>
     <>
       <PageHeader
         TopBarContent={{
@@ -217,8 +222,11 @@ export default function Products() {
         </Modal>
       </div>
     </>
+    </Protected>
   );
 }
 
 Products.getLayout = (page) => <Protected>{page}</Protected>;
 Products.pageTitle = 'Products';
+
+export default withAuth(Products)

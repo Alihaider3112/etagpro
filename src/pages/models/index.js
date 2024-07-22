@@ -2,23 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Select, message } from 'antd';
 import PageHeader from '@/components/common/PageHeader';
 import Protected from '@/layouts/Protected';
-import useFetch from '@/hooks/useFetch';
+import useFetch from '@/hooks/common/useFetch';
 import axios from 'axios';
-
-export default function Models() {
+import MoreActions from '@/components/common/MoreActions'
+import LucideIcon from '@/components/common/LucideIcon';
+import { useRouter } from 'next/router';
+import withAuth from '@/hooks/common/withauth';
+ function Models() {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [Model, setModel] = useState(false);
+  const [modelToDeleteId, setModelToDeleteId] = useState(null);
   const [isUpdate, setIsUpdate] = useState(false);
   const [currentModel, setCurrentModel] = useState(null);
   const [form] = Form.useForm();
   const [data, setData] = useState([]);
   const { data: fetchedData, loading } = useFetch('/api/brand');
   const { data: companiesData, loading: companiesLoading } = useFetch('/api/companies');
-  console.log('Fetched Data:', fetchedData); 
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   useEffect(() => {
     if (fetchedData) {
-      setData(fetchedData);  
-      console.log('Fetched Data:', fetchedData); 
+      setData(fetchedData);
     }
   }, [fetchedData]);
 
@@ -27,13 +32,14 @@ export default function Models() {
   };
 
   const handleCancel = () => {
+    setModel(false);
     setIsModalOpen(false);
     form.resetFields();
     setIsUpdate(false);
     setCurrentModel(null);
   };
 
-  const handleUpdate = (record) => {
+  const handleReName = (record) => {
     setIsUpdate(true);
     setCurrentModel(record);
     form.setFieldsValue({
@@ -42,6 +48,27 @@ export default function Models() {
       company_id: record.company_id,
     });
     setIsModalOpen(true);
+  };
+
+  const handleRemove = async (id) => {
+    setDeleteLoading(true);
+    try {
+      await axios.delete(`/api/brand/${id}`);
+      const updatedData = data.filter(item => item._id !== id);
+      setData(updatedData);
+      setModel(false);
+      message.success('Model deleted successfully');
+    } catch (error) {
+      console.error('Error deleting model:', error);
+      message.error('Failed to delete model');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    setModelToDeleteId(id);
+    setModel(true);
   };
 
   const onFinish = async (values) => {
@@ -53,13 +80,12 @@ export default function Models() {
         response = await axios.put(`/api/brand/${currentModel._id}`, updatedModel);
         const updatedData = data.map(item => (item._id === currentModel._id ? response.data.brand : item));
         setData(updatedData);
-        console.log('Updated Model:', response.data.brand); 
-        message.success('Model updated successfully');
+        message.success('Model renamed successfully');
       } else {
         const { name, company_name, company_id } = values;
         const newModel = { name, company_name, company_id };
         response = await axios.post('/api/brand', newModel);
-        setData([...data, response.data.result]); 
+        setData([...data, response.data.result]);
         message.success('Model added successfully');
       }
       setIsModalOpen(false);
@@ -67,7 +93,7 @@ export default function Models() {
       setIsUpdate(false);
       setCurrentModel(null);
     } catch (error) {
-      console.error('Error in onFinish:', error);  
+      console.error('Error in onFinish:', error);
       message.error('Failed to submit model');
     }
   };
@@ -94,16 +120,38 @@ export default function Models() {
     },
     {
       title: 'Actions',
+      dataIndex: '',
       key: 'actions',
       render: (_, record) => (
-        <Button type="link" onClick={() => handleUpdate(record)}>
-          Update
-        </Button>
+        <MoreActions
+          icon={{ name: 'EllipsisVertical', size: 15, wrap: 'text-black' }}
+          lucide
+          items={[
+            {
+              id: 'edit',
+              icon: <LucideIcon name="Pencil" size={14} wrap="mr-1" />,
+              label: 'Edit',
+              style: { width: '140px' },
+              onClick: () => handleReName(record),
+            },
+            {
+              id: 'delete',
+              icon: <LucideIcon name="Trash2" size={14} wrap="mr-1" />,
+              label: 'Delete',
+              style: { width: '140px' },
+              danger: true,
+              onClick: () => handleDelete(record._id),
+            },
+          ]}
+          iconStyle=" text-gray-500"
+          toggleClassName="w-auto p-0 h-auto"
+        />
       ),
     },
   ];
 
   return (
+    <Protected>
     <>
       <PageHeader
         TopBarContent={{
@@ -172,9 +220,30 @@ export default function Models() {
           </Form.Item>
         </Form>
       </Modal>
+
+      <Modal
+        title="Delete Model"
+        open={Model}
+        onCancel={handleCancel}
+        width={400}
+        footer={[
+          <Button key="cancel" onClick={handleCancel} style={{ width: '80px', height: '32px' }}>
+            Cancel
+          </Button>,
+          <Button key="ok" type="primary" danger onClick={() => handleRemove(modelToDeleteId)} style={{ width: '80px', height: '32px' }} loading={deleteLoading}>
+            OK
+          </Button>,
+        ]}
+      >
+        <p>Are you sure you want to delete this model?</p>
+      </Modal>
+      
     </>
+    </Protected>
   );
 }
 
 Models.getLayout = (page) => <Protected>{page}</Protected>;
 Models.pageTitle = 'Models';
+
+export default withAuth(Models)

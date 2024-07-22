@@ -1,29 +1,42 @@
-import { Button, Form, Input } from 'antd'
-import { useState } from 'react'
-import { useRouter } from 'next/router'
-import Account from '@/layouts/Account'
-import Public from '@/layouts/Public'
-import { showNotification } from '@/constants/utils'
-import LucideIcon from '@/components/common/LucideIcon'
+import { Button, Form, Input } from 'antd';
+import { useState } from 'react';
+import { useRouter } from 'next/router';
+import Account from '@/layouts/Account';
+import Public from '@/layouts/Public';
+import { showNotification } from '@/constants/utils';
+import LucideIcon from '@/components/common/LucideIcon';
+import axios from 'axios';
 
 export default function Login() {
-  const router = useRouter()
+  const router = useRouter();
 
-  const [loader, setLoader] = useState(false)
+  const [loader, setLoader] = useState(false);
   const [lock, setLock] = useState('Lock');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  const onSubmit = async values => {
-    setLoader(true)
+  const handleLogin = async () => {
+    setLoader(true);
     try {
-      console.log(values);
-      router.replace('/products')
-      showNotification('Logined Successfully')
+      const response = await axios.post('/api/login/', { email, password });
+      const { token } = response.data;
+      localStorage.setItem('token', token);
+      router.replace('/products');
+      showNotification('Logged in Successfully');
     } catch (error) {
-      showNotification('Invalid Credentials')
+      console.log('Failed to login:', error);
+      showNotification('Invalid Credentials');
     } finally {
-      setLoader(false)
+      setLoader(false);
     }
-  }
+  };
+
+  const onSubmit = async (values) => {
+    setEmail(values.email);
+    setPassword(values.password);
+    await handleLogin();
+  };
+
   return (
     <Form name="form_login" autoComplete="off" onFinish={onSubmit}>
       <Form.Item
@@ -37,6 +50,8 @@ export default function Login() {
         ]}
       >
         <Input
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
           size="large"
           prefix={
             <LucideIcon
@@ -58,6 +73,8 @@ export default function Login() {
         ]}
       >
         <Input.Password
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
           prefix={
             <LucideIcon
               name={lock}
@@ -70,8 +87,8 @@ export default function Login() {
           placeholder="Password"
           size="large"
           visibilityToggle={{
-            onVisibleChange: visible => {
-              setLock(visible ? 'Unlock' : 'Lock')
+            onVisibleChange: (visible) => {
+              setLock(visible ? 'Unlock' : 'Lock');
             }
           }}
         />
@@ -86,12 +103,12 @@ export default function Login() {
         Log In
       </Button>
     </Form>
-  )
+  );
 }
 
-Login.getLayout = page => (
+Login.getLayout = (page) => (
   <Public>
     <Account heading="Welcome back!">{page}</Account>
   </Public>
-)
-Login.pageTitle = 'Login - Inventory'
+);
+Login.pageTitle = 'Login - Inventory';

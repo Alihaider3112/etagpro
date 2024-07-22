@@ -3,9 +3,12 @@ import Protected from '@/layouts/Protected';
 import { Table, Button, Modal, Form, Input, message } from 'antd';
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import useFetch from '@/hooks/useFetch';
+import useFetch from '@/hooks/common/useFetch';
+import withAuth from '@/hooks/common/withauth';
+import { useRouter } from 'next/router';
 
-export default function Companies() {
+ function Companies() {
+  const router=useRouter()
   const [form] = Form.useForm();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { data: fetchedData, error, loading } = useFetch('/api/companies');
@@ -58,6 +61,7 @@ export default function Companies() {
   ];
 
   return (
+    <Protected>
     <>
       <PageHeader
         TopBarContent={{
@@ -99,8 +103,10 @@ export default function Companies() {
         </Modal>
       </div>
     </>
+    </Protected>
   );
 }
 
 Companies.getLayout = (page) => <Protected>{page}</Protected>;
 Companies.pageTitle = 'Companies';
+export default withAuth(Companies)

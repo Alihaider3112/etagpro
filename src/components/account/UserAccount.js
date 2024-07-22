@@ -29,7 +29,7 @@ function UserAccount() {
           onActionItemClick={async item => {
             const { key } = item
             if (key === 'Logout') {
-              localStorage.removeItem(IDA_TOKEN)
+              localStorage.removeItem('token')
               Router.push('/')
             } else {
               message.info('Coming soon. Stay tuned.')
