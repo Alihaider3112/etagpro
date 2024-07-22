@@ -1,9 +1,10 @@
 import connect from '../../../../connection/index';
 import Brand from '../../../../models/brand';
+import verifyToken  from '../../../../auth/index';  
 
-export default async function handler(req, res) {
+
+const handler = async (req, res) => {
     await connect();
-
     const { method } = req;
     const { id } = req.query;
 
@@ -55,3 +56,5 @@ export default async function handler(req, res) {
             res.status(405).end(`Method ${method} Not Allowed`);
     }
 }
+
+export default (req, res) => verifyToken(req, res, () => handler(req, res));

@@ -1,9 +1,10 @@
 import  connect  from '../../../../connection/index';
 import Products from '../../../../models/product';
+import  verifyToken  from '../../../../auth/index';  
 
-export default async function handler(req, res) {
+const handler = async (req, res) => {
+
     await connect();
-
     if (req.method === 'GET') {
         const { id } = req.query; 
         try {
@@ -56,3 +57,5 @@ export default async function handler(req, res) {
     }
     
 }
+
+export default (req, res) => verifyToken(req, res, () => handler(req, res));
