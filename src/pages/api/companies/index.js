@@ -26,12 +26,22 @@ const handler = async (req, res) => {
         }
     } else if (req.method === 'GET') {
         try {
-            const { page = 1, limit = 10 } = req.query; 
+            const { page = 1, limit = 10,search,filter } = req.query; 
             const skip = (page - 1) * limit;
-
-            const result = await Companies.find({})
-                                          .skip(skip)
-                                          .limit(parseInt(limit));
+            const query={};
+            if(search){
+                query.name = { $regex: search, $options: 'i' };
+            }
+            if (filter) {
+                try {
+                    const filterObj = JSON.parse(filter);
+                    Object.assign(query, filterObj);
+                } catch (parseError) {
+                    console.error('Error parsing filter:', parseError);
+                    return res.status(400).json({ message: 'Invalid filter format', error: parseError });
+                }
+            }
+            const result = await Companies.find(query).skip(skip).limit(parseInt(limit));
 
             res.status(200).json({
                 message: 'ok',

@@ -20,7 +20,7 @@ const verifyToken = async (req, res, next) => {
         next();
     } catch (error) {
         console.error('Token verification error:', error);
-        return res.status(403).json({ message: 'Forbidden: Invalid token' });
+        return res.status(403).json({ message: 'jwt expired' });
     }
 };
 
