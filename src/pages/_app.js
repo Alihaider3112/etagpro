@@ -11,8 +11,7 @@ export default function App({ Component, pageProps }) {
   const title = Component.pageTitle || 'Login - Inventory'
 
   useEffect(() => {
-    // Check if the token is present in localStorage
-    const token = localStorage.getItem('token') // Replace with your token key
+    const token = localStorage.getItem('token') 
     if (token) {
       if (window.location.pathname === '/') {
          router.replace('/products')

@@ -13,10 +13,51 @@ import { useRouter } from 'next/router';
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { data: fetchedData, error, loading } = useFetch('/api/companies');
   const [data, setData] = useState([]);
+  const[pagination,setPagination]=useState({current:1,pageSize:10})
+  const[totalCount,setTotalCount]=useState(0)
+  const[tableParams,setTableParams]=useState({pagination:{current:1,pageSize:10},filters:{},sorter:{}})
+
+
+  const fetchComapnies=async(page=1,limit=10)=>{
+    try{
+      const token=localStorage.getItem('token')
+      const response=await axios.get(`/api/companies/?page=${page}&limit=${limit}`,{
+        headers:{
+          Authorization:`Bearer ${token}`,
+        }
+      });
+
+      const fetchData=response.data;
+      setData(fetchData.result || [])
+      setTotalCount(fetchData.totalCount || 0)
+
+    }catch(error){
+      console.error("Failed to fetch Companies",error)
+    }
+  }
+
+  const handleTableChange=(pagination,filters,sorter)=>
+  {
+     setTableParams((
+      pagination,
+      filters,
+      sorter
+     ))
+
+     if(pagination.current !== tableParams.pagination?.pageSize  || pagination.pageSize !== tableParams.pagination?.current)
+     {
+       setPagination({current:pagination.current,pageSize:pagination.pageSize})
+     }
+  }
+
+  useEffect(()=>{
+    fetchComapnies(pagination.current,pagination.pageSize)
+  },[pagination])
 
   useEffect(() => {
-    if (fetchedData) {
+    if (fetchedData && Array.isArray(fetchedData)) {
       setData(fetchedData);
+      console.log('fetchedData:', fetchedData);
     }
   }, [fetchedData]);
 
@@ -24,17 +65,26 @@ import { useRouter } from 'next/router';
 
   const addCompany = async (company) => {
     try {
-      const response = await axios.post('/api/companies', company);
+      const token = localStorage.getItem('token'); 
+            const response = await axios.post('/api/companies', company, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+  
       const newDataSource = [...data, response.data.result];
       setData(newDataSource);
+  
       setIsModalOpen(false);
-     
       form.resetFields();
+      fetchComapnies(pagination.current,pagination.pageSize)
       message.success('Company added successfully');
     } catch (error) {
+      console.error('Failed to add company:', error); 
       message.error('Failed to add company');
     }
   };
+  
 
   const showModal = () => {
     setIsModalOpen(true);
@@ -75,7 +125,18 @@ import { useRouter } from 'next/router';
           </Button>
         </div>
        
-        <Table dataSource={data} columns={columns} pagination={{ defaultPageSize: 10, hideOnSinglePage: true }} loading={loading} rowKey="_id" />
+        <Table
+         dataSource={data}
+         columns={columns}
+         pagination={{ 
+          current:pagination.current, 
+          pageSize:pagination.pageSize,
+          total:totalCount,
+        
+        }} 
+        onChange={handleTableChange}
+         loading={loading} 
+         rowKey="_id" />
         <Modal className='w-1/3 h-24 text-center ' title="Add Company" open={isModalOpen} onCancel={() => setIsModalOpen(false)} footer={null}>
           <Form
             form={form}

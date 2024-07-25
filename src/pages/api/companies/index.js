@@ -27,6 +27,7 @@ const handler = async (req, res) => {
     } else if (req.method === 'GET') {
         try {
             const { page = 1, limit = 10,search,filter } = req.query; 
+            const totalCount = await Companies.countDocuments({});
             const skip = (page - 1) * limit;
             const query={};
             if(search){
@@ -46,6 +47,7 @@ const handler = async (req, res) => {
             res.status(200).json({
                 message: 'ok',
                 result,
+                totalCount
             });
         } catch (error) {
             res.status(400).json({ message: 'error', error });
