@@ -37,6 +37,8 @@ const handler = async (req, res) => {
       const { page = 1, limit = 10,search,filter } = req.query; 
       const skip = (page - 1) * limit;
       const query={};
+
+      const totalCount = await Products.countDocuments(query);
             if(search){
                 query.brand_name = { $regex: search, $options: 'i' };
             }
@@ -54,6 +56,8 @@ const handler = async (req, res) => {
       res.status(200).json({
           message: 'ok',
           result,
+          totalCount,
+          query
       });
     } catch (error) {
       res.status(400).json({ message: 'error', error });

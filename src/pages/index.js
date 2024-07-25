@@ -22,10 +22,10 @@ export default function Login() {
       const { token } = response.data;
       localStorage.setItem('token', token);
       router.replace('/products');
-      showNotification('Logged in Successfully');
+      showNotification('Logged in Successfully', '', { type: 'success' }); 
     } catch (error) {
       console.log('Failed to login:', error);
-      showNotification('Invalid Credentials');
+      showNotification('Invalid Credentials', '', { type: 'error' }); 
     } finally {
       setLoader(false);
     }
