@@ -1,5 +1,6 @@
 import connect from '../../../../connection/index';
 import Images from '../../../../models/image';
+import { IncomingForm } from 'formidable';
 import { deleteImage,updateImage } from '../../../../upload_images/index'; 
 import  verifyToken  from '../../../../auth/index';  
 
@@ -58,7 +59,7 @@ const handler = async (req, res) => {
           throw new Error('No file uploaded or multiple files uploaded');
         }
 
-        const imageRecord = await Images.findById1f194_squaredid;
+        const imageRecord = await Images.findById(id);
         if (!imageRecord) {
           throw new Error('Image not found in database');
         }
