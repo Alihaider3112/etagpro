@@ -41,3 +41,17 @@ export const deleteImage = async (publicId) => {
     throw error;
   }
 };
+export const updateImage = async (filePath, publicId, folder) => {
+  try {
+    // First, delete the old image
+    await deleteImage(publicId);
+
+    // Then, upload the new image
+    const result = await uploadImage(filePath, folder);
+
+    return result;
+  } catch (error) {
+    console.error('Error updating image:', error);
+    throw error;
+  }
+};
