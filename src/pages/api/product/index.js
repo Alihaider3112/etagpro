@@ -7,7 +7,7 @@ const handler = async (req, res) => {
 
   await connect();
   if (req.method === 'POST') {
-    const { brand_name, brand_id, serial_number, company_name, company_id } = req.body;
+    const { brand_name, brand_id, serial_number, company_name, company_id,image_url } = req.body;
 
     try {
       const brand = await Brand.findById(brand_id);
@@ -20,6 +20,7 @@ const handler = async (req, res) => {
         serial_number,
         company_name,
         company_id,
+        image_url,
         created_by: "Naveed",
         created_at: new Date(),
         updated_by: "Naveed",

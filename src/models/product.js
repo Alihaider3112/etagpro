@@ -15,6 +15,7 @@ const productSchema = new Schema({
     updated_at:Date,
     company_name:String,
     company_id:String,
+    image_url: String 
 })
 console.log('>>>>>>>>>.......', mongoose.models)
 module.exports = mongoose.models.product || mongoose.model('product', productSchema);

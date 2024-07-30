@@ -19,7 +19,7 @@ const handler = async (req, res) => {
         }
     }  
     else if (req.method === 'PUT') {
-       const { brand_name,brand_id,serial_number,company_name,company_id } = req.body;
+       const { brand_name,brand_id,serial_number,company_name,company_id,image_url } = req.body;
        const { id } = req.query; 
         try {
         const updatedProduct = await Products.findByIdAndUpdate(id, {
@@ -28,6 +28,7 @@ const handler = async (req, res) => {
                serial_number:serial_number,
                company_name:company_name,
                company_id:company_id,
+               image_url:image_url,
                updated_by:"Asad",
                updated_at:Date.now(),
         }, { new: true }); 
@@ -52,7 +53,7 @@ const handler = async (req, res) => {
         }
     } 
     else {
-        res.setHeader('Allow', ['GET']);
+        res.setHeader('Allow', ['GET','PUT','DELETE']);
         res.status(405).end(`Method ${req.method} Not Allowed`);
     }
     
