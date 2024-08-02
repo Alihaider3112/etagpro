@@ -2,12 +2,13 @@ import connect from '../../../connection/index';
 import Products from '../../../models/product';
 import Brand from '../../../models/brand';
 import  verifyToken  from '../../../auth/index';  
+import Image from '../../../models/image';
 
 const handler = async (req, res) => {
 
   await connect();
   if (req.method === 'POST') {
-    const { brand_name, brand_id, serial_number, company_name, company_id,image_url } = req.body;
+    const { brand_name, brand_id, serial_number, company_name, company_id,image_url, image_id } = req.body;
 
     try {
       const brand = await Brand.findById(brand_id);
@@ -28,6 +29,9 @@ const handler = async (req, res) => {
       });
 
       const result = await product.save();
+      await Image.findByIdAndUpdate(image_id, {
+        $set: { product_id: result.id }
+      });
       res.status(200).json({ message: 'ok', result });
     } catch (error) {
       console.log(error);
