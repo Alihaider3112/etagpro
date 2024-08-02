@@ -10,6 +10,7 @@ const imageSchema =new Schema({
     public_id:{
       type:String,
       required:true,
-    }
+    },
+    product_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }
 })
 module.exports = mongoose.model.imageSchema|| mongoose.model('images', imageSchema);

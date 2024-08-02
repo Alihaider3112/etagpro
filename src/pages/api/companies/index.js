@@ -57,7 +57,7 @@ const handler = async (req, res) => {
         res.status(405).end(`Method ${req.method} Not Allowed`);
     }
 } catch (error) {
-    res.status(400).json({ message: 'error', error });s
+    res.status(400).json({ message: 'error', error });
 }
 };
 
