@@ -10,16 +10,16 @@ export default function App({ Component, pageProps }) {
   const getLayout = Component.getLayout || (page => page)
   const title = Component.pageTitle || 'Login - Inventory'
 
-  useEffect(() => {
-    const token = localStorage.getItem('token') 
-    if (token) {
-      if (window.location.pathname === '/') {
-         router.replace('/products')
-      }else{
-        router.replace('/')
-      }
-    }
-  }, [])
+  // useEffect(() => {
+  //   const token = localStorage.getItem('token') 
+  //   if (token) {
+  //     if (window.location.pathname === '/') {
+  //        router.replace('/products')
+  //     }else{
+  //       router.replace('/')
+  //     }
+  //   }
+  // }, [])
   return (
     <>
       <Head>

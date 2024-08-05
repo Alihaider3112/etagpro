@@ -13,4 +13,4 @@ const imageSchema =new Schema({
     },
     product_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' }
 })
-module.exports = mongoose.model.imageSchema|| mongoose.model('images', imageSchema);
+module.exports = mongoose.models.images|| mongoose.model('images', imageSchema);

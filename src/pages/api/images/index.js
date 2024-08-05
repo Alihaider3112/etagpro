@@ -63,7 +63,7 @@ const handler = async (req, res) => {
       return res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
   } else {
-    res.setHeader('Allow', ['GET', 'POST']);
+    res.setHeader('Allow', ['GET']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 };

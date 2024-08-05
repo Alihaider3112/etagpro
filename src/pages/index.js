@@ -19,8 +19,7 @@ export default function Login() {
     setLoader(true);
     try {
       const response = await axios.post('/api/login/', { email, password });
-      const { token } = response.data;
-      localStorage.setItem('token', token);
+      localStorage.setItem('token', response.data.token);
       router.replace('/products');
       showNotification('Logged in Successfully', '', { type: 'success' }); 
     } catch (error) {

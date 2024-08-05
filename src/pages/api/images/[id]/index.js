@@ -3,6 +3,7 @@ import Images from '../../../../models/image';
 import { IncomingForm } from 'formidable';
 import { deleteImage,updateImage } from '../../../../upload_images/index'; 
 import  verifyToken  from '../../../../auth/index';  
+import { IncomingForm } from 'formidable';
 
 export const config = {
     api: {
@@ -18,7 +19,7 @@ const handler = async (req, res) => {
             if (!id) {
                 return res.status(400).json({ message: 'ID is required' });
             }
-            const imageRecord = await Images.findOne({ _id: id });
+            const imageRecord = await Images.findById(id);
             if (!imageRecord) {
                 return res.status(400).json({ message: 'Image not found in database ' });
            }

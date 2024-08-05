@@ -19,7 +19,7 @@ const handler = async (req, res) => {
         }
     }  
     else if (req.method === 'PUT') {
-       const { brand_name,brand_id,serial_number,company_name,company_id,image_url } = req.body;
+        const { brand_name,brand_id,serial_number,company_name,company_id,image_url } = req.body;
        const { id } = req.query; 
         try {
         const updatedProduct = await Products.findByIdAndUpdate(id, {

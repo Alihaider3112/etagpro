@@ -27,7 +27,7 @@ export default function PageHeader({
             {TopBarContent?.pageTitle}
           </div>
           <p className="mb-0 text-xs empty:hidden text-slate-600">
-            {TopBarContent.description}
+            {TopBarContent?.description}
           </p>
         </div>
       </div>

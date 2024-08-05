@@ -1,26 +1,52 @@
 import PageHeader from '@/components/common/PageHeader';
 import Protected from '@/layouts/Protected';
-import { Table, Button, Modal, Form, Select, Input, message } from 'antd';
+import { Table, Button, Modal, Form, Select, Input, message,Image,Upload,Tag } from 'antd';
 import { useState, useEffect } from 'react';
 import useFetch from '@/hooks/common/useFetch';
 import axios from 'axios';
+import MoreActions from '@/components/common/MoreActions';
+import LucideIcon from '@/components/common/LucideIcon';
 import { useRouter } from 'next/router';
 import withAuth from '@/hooks/common/withauth';
+import { PlusOutlined, LoadingOutlined } from '@ant-design/icons';
+
+function getBase64(img, callback) {
+  const reader = new FileReader();
+  reader.addEventListener('load', () => callback(reader.result));
+  reader.readAsDataURL(img);
+}
+
+function beforeUpload(file) {
+  const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png';
+  if (!isJpgOrPng) {
+    message.error('You can only upload JPG/PNG file!');
+  }
+  const isLt2M = file.size / 1024 / 1024 < 2;
+  if (!isLt2M) {
+    message.error('Image must be smaller than 2MB!');
+  }
+  return isJpgOrPng && isLt2M;
+}
 
 function Products() {
   const router = useRouter();
   const [form] = Form.useForm();
+  const [currentModel, setCurrentModel] = useState(null);
   const [data, setData] = useState([]);
   const [totalCount, setTotalCount] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filteredBrandsData, setFilteredBrandsData] = useState([]);
   const [filteredCompaniesData, setFilteredCompaniesData] = useState([]);
+  const [isUpdate, setIsUpdate] = useState(false);
+  const [image, setImage] = useState('');
   const [filters, setFilters] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
   const [tableParams, setTableParams] = useState({ pagination: { current: 1, pageSize: 10 }, filters: {}, sorter: {} });
   const { data: brandsData, loading: brandsLoading } = useFetch('/api/brand');
   const { data: companiesData, loading: companiesLoading } = useFetch('/api/companies');
-
+  
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -28,6 +54,20 @@ function Products() {
       return;
     }
   }, [router]);
+  
+  const handleChange = (info) => {
+    if (info.file.status === 'uploading') {
+      setLoading(true);
+      return;
+    }
+    if (info.file.status === 'done') {
+      setImage(info.file.originFileObj);
+      getBase64(info.file.originFileObj, (image) => {
+        setLoading(false);
+      });
+    }
+  };
+  
 
   const fetchProducts = async (page = 1, limit = 10, filters = {}) => {
     try {
@@ -91,48 +131,166 @@ function Products() {
       dataIndex: 'brand_name',
       key: 'brand_name',
     },
+    {
+      title: 'Image',
+      dataIndex: 'image_url',
+      key: 'image_url',
+      render: (text, record) => text ? (
+        <div className="relative">
+          <Image
+            src={text}
+            width={20}
+            height={20}
+          />
+        </div>
+      ) : 'No Image',
+    },
+      
+    {
+      title: 'Actions',
+      dataIndex: '',
+      key: 'actions',
+      render: (_, record) => (
+        <MoreActions
+          icon={{ name: 'EllipsisVertical', size: 15, wrap: 'text-black' }}
+          lucide
+          items={[
+            {
+              id: 'edit',
+              icon: <LucideIcon name="Pencil" size={14} wrap="mr-1" />,
+              label: 'Edit',
+              style: { width: '140px' },
+              onClick: () => handleReName(record),
+            },
+          ]}
+          iconStyle=" text-gray-500"
+          toggleClassName="w-auto p-0 h-auto"
+        />
+      ),
+    },
   ];
 
-  const showModal = () => {
+  const handleReName=(record)=>
+  {
+    setIsUpdate(true);
+    setCurrentModel(record);
+    setIsModalOpen(record);
+    form.setFieldsValue({
+      brand_name: record.brand_name,
+      company_name: record.company_name,
+      serial_number:record.serial_number,
+
+    });
+    setImage(record.image_url)
     setIsModalOpen(true);
+  }
+
+  const showModal = () => {
+    setIsUpdate(false);
+    setCurrentModel(null);
+    form.resetFields();
+    setImage(null);
+    setIsModalOpen(true);
+
   };
 
   const handleCancel = () => {
     setIsModalOpen(false);
+    setIsUpdate(false)
     form.resetFields();
+    setImage(null);
   };
 
   const onFinishFailed = (errorInfo) => {
     console.log('Failed:', errorInfo);
   };
+  
+  
 
+  
   const onFinish = async (values) => {
-    try {
+    setSubmitLoading(true);
+    const token = localStorage.getItem('token');
+    let imageUrl = image;
+
+    if (typeof image !== 'string') {
+      const formData = new FormData();
+      formData.append('image', image);
+      try {
+        const resp = await axios.post(`/api/images`, formData, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        imageUrl = resp.data.result.image_url;
+        
+      } catch (error) {
+        console.error('Failed to upload image:', error);
+        message.error('Failed to upload image');
+        setSubmitLoading(false);
+        return;
+      }
+    }
+
+    if (isUpdate && currentModel) {
       const { brand_name, serial_number, company_name } = values;
       const brand = filteredBrandsData.find(b => b.name === brand_name);
       const company = filteredCompaniesData.find(c => c.name === company_name);
+      const updatedModel = { 
+        brand_name,
+        brand_id: brand?._id,
+        serial_number,
+        company_name,
+        company_id: company?._id,
+        image_url: imageUrl,
+      };
 
+      try {
+        const response = await axios.put(`/api/product/${currentModel._id}`, updatedModel, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const updatedData = data.map(item => (item._id === currentModel._id ? response.data.product : item));
+        setData(updatedData);
+
+        fetchProducts(pagination.current, pagination.pageSize, filters);
+        handleCancel()
+        message.success('Product updated successfully');
+        setIsModalOpen(false);
+        form.resetFields();
+      } catch (error) {
+        message.error('Failed to update product');
+      } finally {
+        setSubmitLoading(false);
+      }
+    } else {
+      const { brand_name, serial_number, company_name } = values;
+      const brand = filteredBrandsData.find(b => b.name === brand_name);
+      const company = filteredCompaniesData.find(c => c.name === company_name);
       const newProduct = {
         brand_name,
         brand_id: brand?._id,
         serial_number,
         company_name,
         company_id: company?._id,
+        image_url: imageUrl,
       };
 
-      const token = localStorage.getItem('token');
-      const response = await axios.post('/api/product', newProduct, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const savedProduct = response.data.result;
-      setData(prevData => [...prevData, savedProduct]);
-      setIsModalOpen(false);
-      form.resetFields();
-      message.success('Product added successfully');
-      fetchProducts(pagination.current, pagination.pageSize, filters);
-    } catch (error) {
-      message.error('Failed to submit product');
+      try {
+        const response = await axios.post('/api/product', newProduct, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setData([...data, response.data.product]);
+        fetchProducts(pagination.current, pagination.pageSize, filters);
+        setTotalCount(totalCount + 1);
+        handleCancel()
+        message.success('Product added successfully');
+        setIsModalOpen(false);
+        form.resetFields();
+        
+      } catch (error) {
+        console.error('Failed to add product:', error);
+        message.error('Failed to add product');
+      } finally {
+        setSubmitLoading(false);
+      }
     }
   };
 
@@ -144,6 +302,14 @@ function Products() {
     });
   };
 
+  const uploadButton = (
+    <div>
+      {loading ? <LoadingOutlined /> : <PlusOutlined />}
+      <div className="ant-upload-text">Upload</div>
+    </div>
+  );
+
+ 
   const fetchFilterCompany = async (search) => {
     if (!search) return;
     try {
@@ -271,6 +437,7 @@ function Products() {
             <Form
               form={form}
               name="basic"
+              title={isUpdate ? 'Update Model' : 'Add a New Model'}
               style={{ maxWidth: 600 }}
               initialValues={{ remember: true }}
               onFinish={onFinish}
@@ -291,6 +458,7 @@ function Products() {
                   filterOption={false}
                   allowClear
                   options={filteredCompaniesData.map(company => ({ value: company.name, label: company.name }))}
+                  onChange={(value) => form.setFieldsValue({ company_name: value })}
                 />
               </Form.Item>
 
@@ -306,7 +474,8 @@ function Products() {
                   filterOption={false}
                   allowClear
                   options={filteredBrandsData.map(brand => ({ value: brand.name, label: brand.name }))}
-                />
+                  onChange={(value) => form.setFieldsValue({ brand_name: value })}
+               />
               </Form.Item>
 
               <Form.Item
@@ -316,8 +485,34 @@ function Products() {
               >
                 <Input className="h-8" />
               </Form.Item>
+              <Form.Item
+              wrapperCol={{ offset: 8, span: 9 }}
+              rules={[
+                { validator: () => (image ? Promise.resolve() : Promise.reject('Please upload an image!')) },
+              ]}
+            >
+              <Upload
+                name="image"
+                listType="picture-card"
+                className="avatar-uploader"
+                showUploadList={false}
+                beforeUpload={beforeUpload}
+                onChange={handleChange}
+              >
+               {image ? (
+                   <img src={typeof image === 'string' ? image : URL.createObjectURL(image)} alt="avatar" style={{ width: '100%' }} />
+                ) : (
+                  uploadButton
+                )}
+                
+              </Upload>
+            </Form.Item>
               <Form.Item wrapperCol={{ offset: 10, span: 4 }}>
-                <Button className="h-10 w-20" type="primary" htmlType="submit" style={{ border: 'none' }}>
+                <Button 
+                className="h-10 w-20"
+                 type="primary" 
+                 htmlType="submit"  
+                 loading={submitLoading}style={{ border: 'none' }}>
                   Submit
                 </Button>
               </Form.Item>

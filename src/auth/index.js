@@ -12,16 +12,13 @@ const verifyToken = async (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        const user = await User.findById(decoded.id);
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-        req.user = user;
+        req.user = decoded;
         next();
     } catch (error) {
         console.error('Token verification error:', error);
-        return res.status(403).json({ message: 'jwt expired' });
+        return res.status(403).json({ message: 'Invalid or expired token' });
     }
 };
+
 
 export default verifyToken;

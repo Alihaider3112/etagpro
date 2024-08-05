@@ -52,6 +52,7 @@ import { useRouter } from 'next/router';
 
   useEffect(()=>{
     fetchComapnies(pagination.current,pagination.pageSize)
+    console.log('dfghjkl',fetchComapnies)
   },[pagination])
 
   useEffect(() => {
