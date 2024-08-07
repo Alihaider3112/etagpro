@@ -28,7 +28,6 @@ function beforeUpload(file) {
 
 function UploadPage() {
   const router = useRouter();
-  const [imagesData, setImagesData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProductOpen, setIsProductOpen] = useState(false);
   const [form] = Form.useForm();
@@ -37,12 +36,10 @@ function UploadPage() {
   const [submitLoading, setSubmitLoading] = useState(false);
   const [filteredBrandsData, setFilteredBrandsData] = useState([]);
   const [filteredCompaniesData, setFilteredCompaniesData] = useState([]);
-  // const { data: brandsFetchData, loading: brandsLoading } = useFetch('/api/brand');
-  // const { data: companiesFetchData, loading: companiesLoading } = useFetch('/api/companies');
+
 
   const {
     onFinishFailed,
-    handleTableChange,
     fetchData,
     data,
     loading,
@@ -69,13 +66,13 @@ function UploadPage() {
 
   const handleChange = (info) => {
     if (info.file.status === 'uploading') {
-      setLoading(true);
+      loading: true;
       return;
     }
     if (info.file.status === 'done') {
       setImageUrl(info.file.originFileObj);
       getBase64(info.file.originFileObj, (image) => {
-        setLoading(false);
+        loading: false;
       });
     }
   };
@@ -111,7 +108,7 @@ function UploadPage() {
 
       setIsModalOpen(false);
       form.resetFields();
-      setImagesData([...imagesData, {
+      data: ([...data, {
         ...response.data.result,
         hasProduct: false // New image, initially no associated product
       }]);
@@ -198,7 +195,7 @@ function UploadPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      setImagesData(prevImagesData => prevImagesData.map(img => img._id === selectedImage._id ? { ...img, hasProduct: true } : img));
+      data: (prevdata => prevdata.map(img => img._id === selectedImage._id ? { ...img, hasProduct: true } : img));
 
       setIsProductOpen(false);
       form.resetFields();
@@ -235,12 +232,12 @@ function UploadPage() {
             </div>
           ) : (
             <Row>
-              {imagesData.length === 0 ? (
+              {data?.length === 0 ? (
                 <div className="flex justify-center items-center w-full h-full">
                   <p>No images found.</p>
                 </div>
               ) : (
-                imagesData.map((img, index) => (
+                data?.map((img, index) => (
                   <Col key={index} span={4}>
                     <div
                       className="relative mb-2 cursor-pointer"
