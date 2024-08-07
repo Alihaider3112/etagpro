@@ -1,14 +1,15 @@
 import PageHeader from '@/components/common/PageHeader';
 import Protected from '@/layouts/Protected';
-import { Table, Button, Modal, Form, Select, Input, message, Image, Upload, Tag } from 'antd';
+import { Table, Button, Modal, Form, Select, Input, message,Image,Upload,Tag } from 'antd';
 import { useState, useEffect } from 'react';
-import { useDirectories } from '@/hooks/common/useDirectories';
+import {useDirectories} from '@/hooks/common/useDirectories';
 import axios from 'axios';
 import MoreActions from '@/components/common/MoreActions';
 import LucideIcon from '@/components/common/LucideIcon';
 import { useRouter } from 'next/router';
 import withAuth from '@/hooks/common/withauth';
 import { PlusOutlined, LoadingOutlined } from '@ant-design/icons';
+import useFetch from '@/hooks/common/useFetch';
 
 function getBase64(img, callback) {
   const reader = new FileReader();
@@ -38,7 +39,9 @@ function Products() {
   const [isUpdate, setIsUpdate] = useState(false);
   const [image, setImage] = useState('');
   const [submitLoading, setSubmitLoading] = useState(false);
- 
+  const { data: brandsData, loading: brandsLoading } = useFetch('/api/brand');
+  const { data: companiesData, loading: companiesLoading } = useFetch('/api/companies');
+
   const {
     onFinishFailed,
     handleTableChange,
@@ -47,32 +50,27 @@ function Products() {
     loading,
     totalCount,
     pagination,
-    tableParams,
     filters,
-    error
-  } = useDirectories(`/api/product`)
+    error,
+  } = useDirectories('/api/product');
+  
 
-  const {
-    fetchFilteredData,
-    filteredData,
-    search,
-
-  } = useDirectories(`/api/companies`)
-
-
-  const {
-
-  } = useDirectories(`/api/brand`)
-
+  useEffect(()=>{
+    fetchData(pagination.current,pagination.pageSize,filters)
+  },[])
 
   useEffect(() => {
-    fetchFilteredData('')
-  }, [])
+    if (brandsData && Array.isArray(brandsData)) {
+      setFilteredBrandsData(brandsData);
+    }
+  }, [brandsData]);
 
   useEffect(() => {
-    fetchData(pagination.current, pagination.pageSize, filters)
-  }, [])
-
+    if (companiesData && Array.isArray(companiesData)) {
+      setFilteredCompaniesData(companiesData);
+    }
+  }, [companiesData]);
+  
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -80,7 +78,7 @@ function Products() {
       return;
     }
   }, [router]);
-
+  
   const handleChange = (info) => {
     if (info.file.status === 'uploading') {
       loading:true;
@@ -93,6 +91,7 @@ function Products() {
       });
     }
   };
+  
 
   const columns = [
     {
@@ -129,7 +128,7 @@ function Products() {
         </div>
       ) : 'No Image',
     },
-
+      
     {
       title: 'Actions',
       dataIndex: '',
@@ -154,14 +153,15 @@ function Products() {
     },
   ];
 
-  const handleReName = (record) => {
+  const handleReName=(record)=>
+  {
     setIsUpdate(true);
     setCurrentModel(record);
     setIsModalOpen(record);
     form.setFieldsValue({
       brand_name: record.brand_name,
       company_name: record.company_name,
-      serial_number: record.serial_number,
+      serial_number:record.serial_number,
 
     });
     setImage(record.image_url)
@@ -183,7 +183,8 @@ function Products() {
     form.resetFields();
     setImage(null);
   };
-
+  
+  
   const onFinish = async (values) => {
     setSubmitLoading(true);
     const token = localStorage.getItem('token');
@@ -197,7 +198,7 @@ function Products() {
           headers: { Authorization: `Bearer ${token}` },
         });
         imageUrl = resp.data.result.image_url;
-
+        
       } catch (error) {
         console.error('Failed to upload image:', error);
         message.error('Failed to upload image');
@@ -210,7 +211,7 @@ function Products() {
       const { brand_name, serial_number, company_name } = values;
       const brand = filteredBrandsData.find(b => b.name === brand_name);
       const company = filteredCompaniesData.find(c => c.name === company_name);
-      const updatedModel = {
+      const updatedModel = { 
         brand_name,
         brand_id: brand?._id,
         serial_number,
@@ -227,7 +228,7 @@ function Products() {
         data:updatedData;
 
         fetchData(pagination.current, pagination.pageSize, filters);
-        handleCancel
+        handleCancel()
         message.success('Product updated successfully');
         setIsModalOpen(false);
         form.resetFields();
@@ -253,14 +254,14 @@ function Products() {
         const response = await axios.post('/api/product', newProduct, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        data:([...data, response.data.product]);
+        setData:[...data, response.data.product];
         fetchData(pagination.current, pagination.pageSize, filters);
-        totalCount(totalCount + 1);
+        setTotalCount(totalCount + 1);
         handleCancel()
         message.success('Product added successfully');
         setIsModalOpen(false);
         form.resetFields();
-
+        
       } catch (error) {
         console.error('Failed to add product:', error);
         message.error('Failed to add product');
@@ -271,9 +272,9 @@ function Products() {
   };
 
   const handleFilterChange = (changedFilters) => {
-    setFilters(prevFilters => {
+    filters:(prevFilters => {
       const newFilters = { ...prevFilters, ...changedFilters };
-      setPagination({ current: 1, pageSize: pagination.pageSize });
+      pagination:({ current: 1, pageSize: pagination.pageSize });
       return newFilters;
     });
   };
@@ -285,7 +286,7 @@ function Products() {
     </div>
   );
 
-
+ 
   const fetchFilterCompany = async (search) => {
     if (!search) return;
     try {
@@ -311,7 +312,7 @@ function Products() {
         },
       });
       setFilteredCompaniesData(response.data.result || []);
-      fetchProducts(1, 10, { ...filters, company_name: search });
+      fetchData(1, 10, { ...filters, company_name: search });
     } catch (error) {
       console.error('Failed to fetch companies:', error);
     }
@@ -327,7 +328,7 @@ function Products() {
         },
       });
       setFilteredBrandsData(response.data.result || []);
-      fetchProducts(1, 10, { ...filters, brand_name: search });
+      fetchData(1, 10, { ...filters, brand_name: search });
     } catch (error) {
       console.error('Failed to fetch brands:', error);
     }
@@ -348,7 +349,7 @@ function Products() {
     }
   }
 
-  // if (brandsLoading || companiesLoading) return <p>Loading...</p>;
+  if (brandsLoading || companiesLoading) return <p>Loading...</p>;
 
   return (
     <Protected>
@@ -451,7 +452,7 @@ function Products() {
                   allowClear
                   options={filteredBrandsData.map(brand => ({ value: brand.name, label: brand.name }))}
                   onChange={(value) => form.setFieldsValue({ brand_name: value })}
-                />
+               />
               </Form.Item>
 
               <Form.Item
@@ -462,33 +463,33 @@ function Products() {
                 <Input className="h-8" />
               </Form.Item>
               <Form.Item
-                wrapperCol={{ offset: 8, span: 9 }}
-                rules={[
-                  { validator: () => (image ? Promise.resolve() : Promise.reject('Please upload an image!')) },
-                ]}
+              wrapperCol={{ offset: 8, span: 9 }}
+              rules={[
+                { validator: () => (image ? Promise.resolve() : Promise.reject('Please upload an image!')) },
+              ]}
+            >
+              <Upload
+                name="image"
+                listType="picture-card"
+                className="avatar-uploader"
+                showUploadList={false}
+                beforeUpload={beforeUpload}
+                onChange={handleChange}
               >
-                <Upload
-                  name="image"
-                  listType="picture-card"
-                  className="avatar-uploader"
-                  showUploadList={false}
-                  beforeUpload={beforeUpload}
-                  onChange={handleChange}
-                >
-                  {image ? (
-                    <img src={typeof image === 'string' ? image : URL.createObjectURL(image)} alt="avatar" style={{ width: '100%' }} />
-                  ) : (
-                    uploadButton
-                  )}
-
-                </Upload>
-              </Form.Item>
+               {image ? (
+                   <img src={typeof image === 'string' ? image : URL.createObjectURL(image)} alt="avatar" style={{ width: '100%' }} />
+                ) : (
+                  uploadButton
+                )}
+                
+              </Upload>
+            </Form.Item>
               <Form.Item wrapperCol={{ offset: 10, span: 4 }}>
-                <Button
-                  className="h-10 w-20"
-                  type="primary"
-                  htmlType="submit"
-                  loading={submitLoading} style={{ border: 'none' }}>
+                <Button 
+                className="h-10 w-20"
+                 type="primary" 
+                 htmlType="submit"  
+                 loading={submitLoading}style={{ border: 'none' }}>
                   Submit
                 </Button>
               </Form.Item>
