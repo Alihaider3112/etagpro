@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Table, Button, Modal, Form, Input, Select, message } from 'antd';
 import PageHeader from '@/components/common/PageHeader';
 import Protected from '@/layouts/Protected';
-import useFetch from '@/hooks/common/useFetch';
+import useFetch from '@/hooks/common/useDirectories';
 import axios from 'axios';
 import MoreActions from '@/components/common/MoreActions';
 import LucideIcon from '@/components/common/LucideIcon';
 import { useRouter } from 'next/router';
 import withAuth from '@/hooks/common/withauth';
-
+import { useDirectories } from '@/hooks/common/useDirectories';
 function Models() {
   const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,14 +17,35 @@ function Models() {
   const [isUpdate, setIsUpdate] = useState(false);
   const [currentModel, setCurrentModel] = useState(null);
   const [form] = Form.useForm();
-  const [filteredCompaniesData, setFilteredCompaniesData] = useState([]);
-  const [data, setData] = useState([]);
-  const { data: fetchedData, loading } = useFetch('/api/brand');
-  const { data: companiesData, loading: companiesLoading } = useFetch('/api/companies');
   const [deleteLoading, setDeleteLoading] = useState(false);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
-  const [totalCount, setTotalCount] = useState(0);
-  const [tableParams, setTableParams] = useState({ pagination: { current: 1, pageSize: 10 }, filters: {}, sorter: {} });
+  const {
+    onFinishFailed,
+    handleTableChange,
+    fetchData,
+    data,
+    loading,
+    totalCount,
+    pagination,
+    filters
+
+  } = useDirectories(`/api/brand`)
+
+  const {
+    fetchFilteredData,
+    filteredData,
+    search,
+
+  } = useDirectories(`/api/companies`)
+
+
+  useEffect(() => {
+    fetchData(pagination.current, pagination.pageSize, filters)
+  }, [])
+
+  useEffect(() => {
+    fetchFilteredData('')
+  }, [])
+
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -34,51 +55,9 @@ function Models() {
     }
   }, [router]);
 
-  const fetchModels = async (page = 1, limit = 10) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/brand?page=${page}&limit=${limit}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const fetchData = response.data;
-      setData(fetchData.result || []);
-      setTotalCount(fetchData.totalCount || 0);
-    } catch (error) {
-      console.error('Failed to fetch products:', error);
-    }
-  };
-
-  const fetchFilteredCompanies = async (search) => {
-    const token = localStorage.getItem('token');
-    try {
-      const response = await axios.get(`/api/companies?search=${search}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      setFilteredCompaniesData(response.data.result || []);
-      setPagination({ current: 1, pageSize: 10 });
-    } catch (error) {
-      console.error('Failed to fetch companies:', error);
-    }
-  };
-
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      fetchModels(pagination.current, pagination.pageSize);
-    }
-  }, [pagination]);
 
 
 
-  useEffect(() => {
-    if (companiesData && Array.isArray(companiesData)) {
-      setFilteredCompaniesData(companiesData);
-    }
-  }, [companiesData]);
 
   const showModal = () => {
     setIsModalOpen(true);
@@ -113,9 +92,9 @@ function Models() {
         },
       });
       const updatedData = data.filter(item => item._id !== id);
-      setData(updatedData);
+      data: updatedData;
       setModel(false);
-      fetchModels(pagination.current, pagination.pageSize);
+      fetchData(pagination.current, pagination.pageSize);
       message.success('Model deleted successfully');
     } catch (error) {
       console.error('Error deleting model:', error);
@@ -143,7 +122,7 @@ function Models() {
           },
         });
         const updatedData = data.map(item => (item._id === currentModel._id ? response.data.brand : item));
-        setData(updatedData);
+        data: updatedData;
         message.success('Model renamed successfully');
       } else {
         const { name, company_name, company_id } = values;
@@ -153,10 +132,10 @@ function Models() {
             Authorization: `Bearer ${token}`,
           },
         });
-        setData([...data, response.data.result]);
+        data: ([...data, response.data.result]);
         message.success('Model added successfully');
       }
-      fetchModels(pagination.current, pagination.pageSize);
+      fetchData(pagination.current, pagination.pageSize);
       setIsModalOpen(false);
       form.resetFields();
       setIsUpdate(false);
@@ -167,21 +146,9 @@ function Models() {
     }
   };
 
-  const handleTableChange = (pagination, filters, sorter) => {
-    setTableParams({
-      pagination,
-      filters,
-      sorter,
-    });
 
-    if (pagination.current !== tableParams.pagination?.current || pagination.pageSize !== tableParams.pagination?.pageSize) {
-      setPagination({ current: pagination.current, pageSize: pagination.pageSize });
-    }
-  };
 
-  const onFinishFailed = (errorInfo) => {
-    console.log('Failed:', errorInfo);
-  };
+
 
   const columns = [
     {
@@ -253,7 +220,7 @@ function Models() {
               total: totalCount,
             }}
             onChange={handleTableChange}
-            loading={loading || companiesLoading}
+            loading={loading}
           />
         </div>
         <Modal
@@ -292,8 +259,8 @@ function Models() {
                 placeholder="Select Company name"
                 allowClear
                 filterOption={false}
-                onSearch={fetchFilteredCompanies}
-                options={filteredCompaniesData.map(company => ({ value: company.name, label: company.name }))}
+                onSearch={fetchFilteredData}
+                options={filteredData.map(company => ({ value: company.name, label: company.name }))}
                 onChange={(value) => form.setFieldsValue({ company_name: value })}
               />
 

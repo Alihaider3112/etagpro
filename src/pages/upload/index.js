@@ -5,7 +5,7 @@ import { Button, Modal, Form, message, Upload, Row, Col, Spin, Select, Input } f
 import { PlusOutlined, LoadingOutlined } from '@ant-design/icons';
 import withAuth from '@/hooks/common/withauth';
 import axios from 'axios';
-import useFetch from '@/hooks/common/useFetch';
+import { useDirectories } from '@/hooks/common/useDirectories';
 import { useRouter } from 'next/router';
 
 function getBase64(img, callback) {
@@ -32,15 +32,26 @@ function UploadPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProductOpen, setIsProductOpen] = useState(false);
   const [form] = Form.useForm();
+  const [imagesLoading, setImagesLoading] = useState('')
   const [imageUrl, setImageUrl] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const { data: imagesFetchData, loading: imagesLoading } = useFetch('/api/images');
   const [filteredBrandsData, setFilteredBrandsData] = useState([]);
   const [filteredCompaniesData, setFilteredCompaniesData] = useState([]);
-  const { data: brandsFetchData, loading: brandsLoading } = useFetch('/api/brand');
-  const { data: companiesFetchData, loading: companiesLoading } = useFetch('/api/companies');
+  // const { data: brandsFetchData, loading: brandsLoading } = useFetch('/api/brand');
+  // const { data: companiesFetchData, loading: companiesLoading } = useFetch('/api/companies');
+
+  const {
+    onFinishFailed,
+    handleTableChange,
+    fetchData,
+    data,
+    loading,
+    totalCount,
+    pagination,
+    tableParams,
+    filters,
+    error
+  } = useDirectories(`/api/images`)
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -51,27 +62,10 @@ function UploadPage() {
   }, [router]);
 
   useEffect(() => {
-    if (imagesFetchData && imagesFetchData.length > 0) {
-      setImagesData(imagesFetchData.map(image => ({
-        ...image,
-        hasProduct: image.product_id !== null, // Assuming product_id indicates a product association
-      })));
-    } else {
-      console.log('Failed to fetch images');
-    }
-  }, [imagesFetchData]);
+    fetchData(pagination.current, pagination.pageSize, filters)
+  }, []);
 
-  useEffect(() => {
-    if (brandsFetchData && Array.isArray(brandsFetchData)) {
-      setFilteredBrandsData(brandsFetchData);
-    }
-  }, [brandsFetchData]);
 
-  useEffect(() => {
-    if (companiesFetchData && Array.isArray(companiesFetchData)) {
-      setFilteredCompaniesData(companiesFetchData);
-    }
-  }, [companiesFetchData]);
 
   const handleChange = (info) => {
     if (info.file.status === 'uploading') {
@@ -137,9 +131,6 @@ function UploadPage() {
     </div>
   );
 
-  const onFinishFailed = (errorInfo) => {
-    console.log('Failed:', errorInfo);
-  };
 
   const fetchFilterCompany = async (search) => {
     if (!search) return;

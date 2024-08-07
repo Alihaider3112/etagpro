@@ -1,8 +1,8 @@
 import PageHeader from '@/components/common/PageHeader';
 import Protected from '@/layouts/Protected';
-import { Table, Button, Modal, Form, Select, Input, message,Image,Upload,Tag } from 'antd';
+import { Table, Button, Modal, Form, Select, Input, message, Image, Upload, Tag } from 'antd';
 import { useState, useEffect } from 'react';
-import useFetch from '@/hooks/common/useFetch';
+import { useDirectories } from '@/hooks/common/useDirectories';
 import axios from 'axios';
 import MoreActions from '@/components/common/MoreActions';
 import LucideIcon from '@/components/common/LucideIcon';
@@ -32,21 +32,47 @@ function Products() {
   const router = useRouter();
   const [form] = Form.useForm();
   const [currentModel, setCurrentModel] = useState(null);
-  const [data, setData] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filteredBrandsData, setFilteredBrandsData] = useState([]);
   const [filteredCompaniesData, setFilteredCompaniesData] = useState([]);
   const [isUpdate, setIsUpdate] = useState(false);
   const [image, setImage] = useState('');
-  const [filters, setFilters] = useState({});
-  const [loading, setLoading] = useState(false);
   const [submitLoading, setSubmitLoading] = useState(false);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
-  const [tableParams, setTableParams] = useState({ pagination: { current: 1, pageSize: 10 }, filters: {}, sorter: {} });
-  const { data: brandsData, loading: brandsLoading } = useFetch('/api/brand');
-  const { data: companiesData, loading: companiesLoading } = useFetch('/api/companies');
-  
+ 
+  const {
+    onFinishFailed,
+    handleTableChange,
+    fetchData,
+    data,
+    loading,
+    totalCount,
+    pagination,
+    tableParams,
+    filters,
+    error
+  } = useDirectories(`/api/product`)
+
+  const {
+    fetchFilteredData,
+    filteredData,
+    search,
+
+  } = useDirectories(`/api/companies`)
+
+
+  const {
+
+  } = useDirectories(`/api/brand`)
+
+
+  useEffect(() => {
+    fetchFilteredData('')
+  }, [])
+
+  useEffect(() => {
+    fetchData(pagination.current, pagination.pageSize, filters)
+  }, [])
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) {
@@ -54,60 +80,18 @@ function Products() {
       return;
     }
   }, [router]);
-  
+
   const handleChange = (info) => {
     if (info.file.status === 'uploading') {
-      setLoading(true);
+      loading:true;
       return;
     }
     if (info.file.status === 'done') {
       setImage(info.file.originFileObj);
       getBase64(info.file.originFileObj, (image) => {
-        setLoading(false);
+        loading:false;
       });
     }
-  };
-  
-
-  const fetchProducts = async (page = 1, limit = 10, filters = {}) => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/product?page=${page}&limit=${limit}&filter=${JSON.stringify(filters)}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const fetchData = response.data;
-      setData(fetchData.result || []);
-      setTotalCount(fetchData.totalCount || 0);
-    } catch (error) {
-      console.error('Failed to fetch products:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchProducts(pagination.current, pagination.pageSize, filters);
-  }, [pagination, filters]);
-
-  useEffect(() => {
-    if (brandsData && Array.isArray(brandsData)) {
-      setFilteredBrandsData(brandsData);
-    }
-  }, [brandsData]);
-
-  useEffect(() => {
-    if (companiesData && Array.isArray(companiesData)) {
-      setFilteredCompaniesData(companiesData);
-    }
-  }, [companiesData]);
-
-  const handleTableChange = (pagination, filters, sorter) => {
-    setTableParams({
-      pagination,
-      filters,
-      sorter,
-    });
-    setPagination({ current: pagination.current, pageSize: pagination.pageSize });
   };
 
   const columns = [
@@ -145,7 +129,7 @@ function Products() {
         </div>
       ) : 'No Image',
     },
-      
+
     {
       title: 'Actions',
       dataIndex: '',
@@ -170,15 +154,14 @@ function Products() {
     },
   ];
 
-  const handleReName=(record)=>
-  {
+  const handleReName = (record) => {
     setIsUpdate(true);
     setCurrentModel(record);
     setIsModalOpen(record);
     form.setFieldsValue({
       brand_name: record.brand_name,
       company_name: record.company_name,
-      serial_number:record.serial_number,
+      serial_number: record.serial_number,
 
     });
     setImage(record.image_url)
@@ -201,13 +184,6 @@ function Products() {
     setImage(null);
   };
 
-  const onFinishFailed = (errorInfo) => {
-    console.log('Failed:', errorInfo);
-  };
-  
-  
-
-  
   const onFinish = async (values) => {
     setSubmitLoading(true);
     const token = localStorage.getItem('token');
@@ -221,7 +197,7 @@ function Products() {
           headers: { Authorization: `Bearer ${token}` },
         });
         imageUrl = resp.data.result.image_url;
-        
+
       } catch (error) {
         console.error('Failed to upload image:', error);
         message.error('Failed to upload image');
@@ -234,7 +210,7 @@ function Products() {
       const { brand_name, serial_number, company_name } = values;
       const brand = filteredBrandsData.find(b => b.name === brand_name);
       const company = filteredCompaniesData.find(c => c.name === company_name);
-      const updatedModel = { 
+      const updatedModel = {
         brand_name,
         brand_id: brand?._id,
         serial_number,
@@ -248,10 +224,10 @@ function Products() {
           headers: { Authorization: `Bearer ${token}` },
         });
         const updatedData = data.map(item => (item._id === currentModel._id ? response.data.product : item));
-        setData(updatedData);
+        data:updatedData;
 
-        fetchProducts(pagination.current, pagination.pageSize, filters);
-        handleCancel()
+        fetchData(pagination.current, pagination.pageSize, filters);
+        handleCancel
         message.success('Product updated successfully');
         setIsModalOpen(false);
         form.resetFields();
@@ -277,14 +253,14 @@ function Products() {
         const response = await axios.post('/api/product', newProduct, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        setData([...data, response.data.product]);
-        fetchProducts(pagination.current, pagination.pageSize, filters);
-        setTotalCount(totalCount + 1);
+        data:([...data, response.data.product]);
+        fetchData(pagination.current, pagination.pageSize, filters);
+        totalCount(totalCount + 1);
         handleCancel()
         message.success('Product added successfully');
         setIsModalOpen(false);
         form.resetFields();
-        
+
       } catch (error) {
         console.error('Failed to add product:', error);
         message.error('Failed to add product');
@@ -309,7 +285,7 @@ function Products() {
     </div>
   );
 
- 
+
   const fetchFilterCompany = async (search) => {
     if (!search) return;
     try {
@@ -372,7 +348,7 @@ function Products() {
     }
   }
 
-  if (brandsLoading || companiesLoading) return <p>Loading...</p>;
+  // if (brandsLoading || companiesLoading) return <p>Loading...</p>;
 
   return (
     <Protected>
@@ -475,7 +451,7 @@ function Products() {
                   allowClear
                   options={filteredBrandsData.map(brand => ({ value: brand.name, label: brand.name }))}
                   onChange={(value) => form.setFieldsValue({ brand_name: value })}
-               />
+                />
               </Form.Item>
 
               <Form.Item
@@ -486,33 +462,33 @@ function Products() {
                 <Input className="h-8" />
               </Form.Item>
               <Form.Item
-              wrapperCol={{ offset: 8, span: 9 }}
-              rules={[
-                { validator: () => (image ? Promise.resolve() : Promise.reject('Please upload an image!')) },
-              ]}
-            >
-              <Upload
-                name="image"
-                listType="picture-card"
-                className="avatar-uploader"
-                showUploadList={false}
-                beforeUpload={beforeUpload}
-                onChange={handleChange}
+                wrapperCol={{ offset: 8, span: 9 }}
+                rules={[
+                  { validator: () => (image ? Promise.resolve() : Promise.reject('Please upload an image!')) },
+                ]}
               >
-               {image ? (
-                   <img src={typeof image === 'string' ? image : URL.createObjectURL(image)} alt="avatar" style={{ width: '100%' }} />
-                ) : (
-                  uploadButton
-                )}
-                
-              </Upload>
-            </Form.Item>
+                <Upload
+                  name="image"
+                  listType="picture-card"
+                  className="avatar-uploader"
+                  showUploadList={false}
+                  beforeUpload={beforeUpload}
+                  onChange={handleChange}
+                >
+                  {image ? (
+                    <img src={typeof image === 'string' ? image : URL.createObjectURL(image)} alt="avatar" style={{ width: '100%' }} />
+                  ) : (
+                    uploadButton
+                  )}
+
+                </Upload>
+              </Form.Item>
               <Form.Item wrapperCol={{ offset: 10, span: 4 }}>
-                <Button 
-                className="h-10 w-20"
-                 type="primary" 
-                 htmlType="submit"  
-                 loading={submitLoading}style={{ border: 'none' }}>
+                <Button
+                  className="h-10 w-20"
+                  type="primary"
+                  htmlType="submit"
+                  loading={submitLoading} style={{ border: 'none' }}>
                   Submit
                 </Button>
               </Form.Item>
