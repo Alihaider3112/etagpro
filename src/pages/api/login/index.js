@@ -3,7 +3,7 @@ import Users from '../../../models/user';
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = 'myverysecuresecretkey2912'; // Replace with your actual secret key
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export default async function handler(req, res) {
     await connect();
@@ -23,7 +23,7 @@ export default async function handler(req, res) {
         }
     }
      else {
-        res.setHeader('Allow', ['POST', 'GET']);
+        res.setHeader('Allow', ['POST']);
         res.status(405).end(`Method ${req.method} Not Allowed`);
     }
 }
