@@ -5,7 +5,7 @@ import { Button, Modal, Form, message, Upload, Row, Col, Spin, Select, Input } f
 import { PlusOutlined, LoadingOutlined } from '@ant-design/icons';
 import withAuth from '@/hooks/common/withauth';
 import axios from 'axios';
-import { useDirectories } from '@/hooks/common/useDirectories';
+import useFetch from '@/hooks/common/useFetch';
 import { useRouter } from 'next/router';
 
 function getBase64(img, callback) {
@@ -28,27 +28,19 @@ function beforeUpload(file) {
 
 function UploadPage() {
   const router = useRouter();
+  const [imagesData, setImagesData] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isProductOpen, setIsProductOpen] = useState(false);
   const [form] = Form.useForm();
-  const [imagesLoading, setImagesLoading] = useState('')
   const [imageUrl, setImageUrl] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
+  const { data: imagesFetchData, loading: imagesLoading } = useFetch('/api/images');
   const [filteredBrandsData, setFilteredBrandsData] = useState([]);
   const [filteredCompaniesData, setFilteredCompaniesData] = useState([]);
-
-
-  const {
-    onFinishFailed,
-    fetchData,
-    data,
-    loading,
-    totalCount,
-    pagination,
-    tableParams,
-    filters,
-    error
-  } = useDirectories(`/api/images`)
+  const { data: brandsFetchData, loading: brandsLoading } = useFetch('/api/brand');
+  const { data: companiesFetchData, loading: companiesLoading } = useFetch('/api/companies');
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -59,20 +51,37 @@ function UploadPage() {
   }, [router]);
 
   useEffect(() => {
-    fetchData(pagination.current, pagination.pageSize, filters)
-  }, []);
+    if (imagesFetchData && imagesFetchData.length > 0) {
+      setImagesData(imagesFetchData.map(image => ({
+        ...image,
+        hasProduct: image.brand_id !== null,
+      })));
+    } else {
+      console.log('Failed to fetch images');
+    }
+  }, [imagesFetchData]);
 
+  useEffect(() => {
+    if (brandsFetchData && Array.isArray(brandsFetchData)) {
+      setFilteredBrandsData(brandsFetchData);
+    }
+  }, [brandsFetchData]);
 
+  useEffect(() => {
+    if (companiesFetchData && Array.isArray(companiesFetchData)) {
+      setFilteredCompaniesData(companiesFetchData);
+    }
+  }, [companiesFetchData]);
 
   const handleChange = (info) => {
     if (info.file.status === 'uploading') {
-      loading: true;
+      setLoading(true);
       return;
     }
     if (info.file.status === 'done') {
       setImageUrl(info.file.originFileObj);
       getBase64(info.file.originFileObj, (image) => {
-        loading: false;
+        setLoading(false);
       });
     }
   };
@@ -108,9 +117,9 @@ function UploadPage() {
 
       setIsModalOpen(false);
       form.resetFields();
-      data: ([...data, {
+      setImagesData([...imagesData, {
         ...response.data.result,
-        hasProduct: false // New image, initially no associated product
+        hasProduct: false
       }]);
       setImageUrl(null);
       message.success('Image Uploaded Successfully');
@@ -128,6 +137,9 @@ function UploadPage() {
     </div>
   );
 
+  const onFinishFailed = (errorInfo) => {
+    console.log('Failed:', errorInfo);
+  };
 
   const fetchFilterCompany = async (search) => {
     if (!search) return;
@@ -195,7 +207,7 @@ function UploadPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      data: (prevdata => prevdata.map(img => img._id === selectedImage._id ? { ...img, hasProduct: true } : img));
+      setImagesData(prevImagesData => prevImagesData.map(img => img._id === selectedImage._id ? { ...img, hasProduct: true } : img));
 
       setIsProductOpen(false);
       form.resetFields();
@@ -232,12 +244,12 @@ function UploadPage() {
             </div>
           ) : (
             <Row>
-              {data?.length === 0 ? (
+              {imagesData.length === 0 ? (
                 <div className="flex justify-center items-center w-full h-full">
                   <p>No images found.</p>
                 </div>
               ) : (
-                data?.map((img, index) => (
+                imagesData.map((img, index) => (
                   <Col key={index} span={4}>
                     <div
                       className="relative mb-2 cursor-pointer"

@@ -11,11 +11,11 @@ export default function App({ Component, pageProps }) {
   const title = Component.pageTitle || 'Login - Inventory'
 
   // useEffect(() => {
-  //   const token = localStorage.getItem('token') 
+  //   const token = localStorage.getItem('token')
   //   if (token) {
   //     if (window.location.pathname === '/') {
-  //        router.replace('/products')
-  //     }else{
+  //       router.replace('/products')
+  //     } else {
   //       router.replace('/')
   //     }
   //   }

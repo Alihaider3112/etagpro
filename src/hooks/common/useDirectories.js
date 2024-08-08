@@ -32,7 +32,7 @@ export function useDirectories(url) {
 
 
 
-  
+
 
 
 
@@ -50,6 +50,15 @@ export function useDirectories(url) {
     setPagination({ current: pagination.current, pageSize: pagination.pageSize });
   };
 
+  const handleFilterChange = (changedFilters) => {
+    setFilters(prevFilters => {
+      const newFilters = { ...prevFilters, ...changedFilters };
+      setPagination({ current: 1, pageSize: pagination.pageSize });
+      return newFilters;
+    });
+  };
+
+
   const onFinishFailed = (errorInfo) => {
     console.log('Failed:', errorInfo);
   };
@@ -58,6 +67,7 @@ export function useDirectories(url) {
     onFinishFailed,
     handleTableChange,
     fetchData,
+    handleFilterChange,
     data,
     loading,
     totalCount,
@@ -65,6 +75,6 @@ export function useDirectories(url) {
     tableParams,
     filters,
     error,
-  
+
   };
 }
