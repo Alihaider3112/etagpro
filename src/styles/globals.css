@@ -480,3 +480,5 @@ input:checked + .bot-custom-checkbox {
 .ant-input-status-error {
   @apply !border-[#ff4d4f];
 }
+
+

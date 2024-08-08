@@ -35,6 +35,15 @@ export default function Navbar({ isMobile }) {
       url: '/companies',
       icon: 'Hexagon',
       current: pathname.includes('/companies') 
+    },
+    {
+      id: '4',
+      name: 'Upload',
+      href: '#',
+      url: '/upload',
+      icon: 'Upload',
+      current: pathname.includes('/upload') 
+
     }
   ]
 

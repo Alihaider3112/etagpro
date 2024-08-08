@@ -14,7 +14,7 @@ const api = axios.create({
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem(IDA_TOKEN)
+  const token = localStorage.getItem('token')
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -52,7 +52,7 @@ api.interceptors.response.use(
             className: 'ant-error-notification',
           },
           1000,
-          () => {},
+          () => { },
         )
       }
     }
