@@ -1,9 +1,8 @@
 import connect from '../../../connection/index';
 import Image from '../../../models/image';
-import { IncomingForm } from 'formidable';
+import { IncomingForm } from 'formidable'; 
 import { uploadImage } from '../../../upload_images/index'; 
-import  verifyToken  from '../../../auth/index';  
-
+import verifyToken from '../../../auth/index';  
 
 export const config = {
   api: {
@@ -29,6 +28,7 @@ const handler = async (req, res) => {
       }
 
       try {
+        // Getting the file path for single or multiple file uploads
         const filePath = image.filepath || image[0]?.filepath; 
   
         if (!filePath) {
@@ -37,16 +37,17 @@ const handler = async (req, res) => {
 
         // Upload the image using Cloudinary
         const data = await uploadImage(filePath, 'next.js_upload_image'); 
-        // console.log('Cloudinary upload response:', data);
 
         if (!data || !data.secure_url || !data.public_id) {
           return res.status(500).json({ message: 'Failed to upload image to Cloudinary' });
         }
 
+        // Save image information in the database
         const result = await Image.create({
           image_url: data.secure_url,
           public_id: data.public_id,
         });
+
         return res.status(200).json({ message: 'Image uploaded and data saved successfully', result });
 
       } catch (error) {
@@ -63,10 +64,9 @@ const handler = async (req, res) => {
       return res.status(500).json({ message: 'Internal Server Error', error: error.message });
     }
   } else {
-    res.setHeader('Allow', ['GET']);
+    res.setHeader('Allow', ['GET', 'POST']);
     res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 };
 
 export default (req, res) => verifyToken(req, res, () => handler(req, res));
-
