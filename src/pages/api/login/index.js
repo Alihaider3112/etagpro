@@ -3,7 +3,7 @@ import Users from '../../../models/user';
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = 'myverysecuresecretkey2912';
+const JWT_SECRET = process.env.JWT_SECRET;
 
 export default async function handler(req, res) {
     await connect();
