@@ -3,7 +3,6 @@ const path = require('path')
 
 const nextConfig = {
   reactStrictMode: false,
-  distDir: 'build',
   images: {
     remotePatterns: []
   },
@@ -12,5 +11,6 @@ const nextConfig = {
     return config
   }
 }
+
 
 module.exports = nextConfig
