@@ -5,9 +5,9 @@ import {
   message,
 } from 'antd'
 
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000/products'||'https://etagpro.vercel.app' // will move to read via process env
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL||'https://etagpro.vercel.app/' // will move to read via process env
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: `${API_URL}/products`,
   headers: {
     'Content-Type': 'application/json',
   },
