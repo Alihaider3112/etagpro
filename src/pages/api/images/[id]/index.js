@@ -1,6 +1,5 @@
 import connect from '../../../../connection/index';
 import Images from '../../../../models/image';
-import { IncomingForm } from 'formidable';
 import { deleteImage,updateImage } from '../../../../upload_images/index'; 
 import  verifyToken  from '../../../../auth/index';  
 import { IncomingForm } from 'formidable';
