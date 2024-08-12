@@ -6,6 +6,7 @@ import Public from '@/layouts/Public';
 import { showNotification } from '@/constants/utils';
 import LucideIcon from '@/components/common/LucideIcon';
 import axios from 'axios';
+import { IDA_TOKEN } from '@/constants/constant';
 
 export default function Login() {
   const router = useRouter();
@@ -19,12 +20,12 @@ export default function Login() {
     setLoader(true);
     try {
       const response = await axios.post('/api/login/', { email, password });
-      localStorage.setItem('token', response.data.token);
+      localStorage.setItem(IDA_TOKEN, response.data.token);
       router.replace('/products');
-      showNotification('Logged in Successfully', '', { type: 'success' }); 
+      showNotification('Logged in Successfully', '', { type: 'success' });
     } catch (error) {
       console.log('Failed to login:', error);
-      showNotification('Invalid Credentials', '', { type: 'error' }); 
+      showNotification('Invalid Credentials', '', { type: 'error' });
     } finally {
       setLoader(false);
     }

@@ -54,7 +54,7 @@ function UploadPage() {
     if (imagesFetchData && imagesFetchData.length > 0) {
       setImagesData(imagesFetchData.map(image => ({
         ...image,
-        hasProduct: image.brand_id !== null,
+        hasProduct: !!image.product_id,
       })));
     } else {
       console.log('Failed to fetch images');
@@ -199,7 +199,8 @@ function UploadPage() {
         serial_number,
         company_name,
         company_id: company?._id,
-        image_url
+        image_url,
+        image_id: selectedImage._id,
       };
 
       const token = localStorage.getItem('token');

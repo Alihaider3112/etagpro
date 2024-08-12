@@ -191,6 +191,7 @@ function Products() {
     setSubmitLoading(true);
     const token = localStorage.getItem('token');
     let imageUrl = image;
+    let imageid = ''
 
     if (typeof image !== 'string') {
       const formData = new FormData();
@@ -200,6 +201,7 @@ function Products() {
           headers: { Authorization: `Bearer ${token}` },
         });
         imageUrl = resp.data.result.image_url;
+        imageid = resp.data.result._id
 
       } catch (error) {
         console.error('Failed to upload image:', error);
@@ -220,6 +222,7 @@ function Products() {
         company_name,
         company_id: company?._id,
         image_url: imageUrl,
+        image_id: imageid
       };
 
       try {
@@ -250,6 +253,7 @@ function Products() {
         company_name,
         company_id: company?._id,
         image_url: imageUrl,
+        image_id: imageid
       };
 
       try {
