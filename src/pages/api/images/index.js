@@ -16,7 +16,7 @@ const handler = async (req, res) => {
   if (req.method === 'POST') {
     const form = new IncomingForm();
 
-    form.parse(req, async (err, _fields, files) => {
+    form.parse(req, async (err, fields, files) => {
       if (err) {
         console.error('Error parsing form data:', err);
         return res.status(500).json({ message: 'Error parsing form data', error: err.message });
