@@ -15,18 +15,20 @@ const handler = async (req, res) => {
 
   if (req.method === 'POST') {
     const form = new IncomingForm();
+    console.log('Form parsing started');
 
-    form.parse(req, async (err, fields, files) => {
+    form.parse(req, async (err, _fields, files) => {
+      console.log('Inside form.parse callback');
       if (err) {
         console.error('Error parsing form data:', err);
         return res.status(500).json({ message: 'Error parsing form data', error: err.message });
       }
-
       const image = files.image;
       if (!image || (Array.isArray(image) && image.length === 0)) {
         return res.status(400).json({ message: 'No file uploaded or multiple files uploaded' });
       }
-
+      console.log('Files parsed:', files);
+      
       try {
         // Getting the file path for single or multiple file uploads
         const filePath = image.filepath || image[0]?.filepath; 
