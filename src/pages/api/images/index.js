@@ -24,11 +24,12 @@ const handler = async (req, res) => {
         console.error('Error parsing form data:', err);
         return res.status(500).json({ message: 'Error parsing form data', error: err.message });
       }
+      console.log('Files parsed:', files);
+
       const image = files.image;
       if (!image || (Array.isArray(image) && image.length === 0)) {
         return res.status(400).json({ message: 'No file uploaded or multiple files uploaded' });
       }
-      console.log('Files parsed:', files);
       
       try {
         // Getting the file path for single or multiple file uploads
