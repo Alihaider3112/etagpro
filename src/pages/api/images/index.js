@@ -29,6 +29,8 @@ const handler = async (req, res) => {
       console.log('Files parsed:', files);
 
       const image = files.image;
+      console.log('no image  is uploaded', image);
+
       if (!image || (Array.isArray(image) && image.length === 0)) {
         return res.status(400).json({ message: 'No file uploaded or multiple files uploaded' });
       }
