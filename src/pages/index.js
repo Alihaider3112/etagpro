@@ -1,3 +1,4 @@
+
 import { Button, Form, Input } from 'antd';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
@@ -21,10 +22,10 @@ export default function Login() {
       const response = await axios.post('/api/login/', { email, password });
       localStorage.setItem('token', response.data.token);
       router.replace('/products');
-      showNotification('Logged in Successfully', '', { type: 'success' }); 
+      showNotification('Logged in Successfully', '', { type: 'success' });
     } catch (error) {
       console.log('Failed to login:', error);
-      showNotification('Invalid Credentials', '', { type: 'error' }); 
+      showNotification('Invalid Credentials', '', { type: 'error' });
     } finally {
       setLoader(false);
     }

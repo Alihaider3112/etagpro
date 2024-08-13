@@ -11,6 +11,7 @@ import { useRouter } from 'next/router';
 import withAuth from '@/hooks/common/withauth';
 import { PlusOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useDirectories } from '@/hooks/common/useDirectories';
+import { IDA_TOKEN } from '@/constants/constant';
 
 function getBase64(img, callback) {
   const reader = new FileReader();
@@ -39,6 +40,8 @@ function Products() {
   const [filteredCompaniesData, setFilteredCompaniesData] = useState([]);
   const [isUpdate, setIsUpdate] = useState(false);
   const [image, setImage] = useState('');
+  const [imageUrl, setImageUrl] = useState(null);
+  const [imageId, setImageId] = useState(null);
   const [submitLoading, setSubmitLoading] = useState(false);
   const { data: brandsData, loading: brandsLoading } = useFetch('/api/brand');
   const { data: companiesData, loading: companiesLoading } = useFetch('/api/companies');
@@ -68,18 +71,7 @@ function Products() {
     fetchData(pagination.current, pagination.pageSize, filters)
   }, [])
 
-  const handleChange = (info) => {
-    if (info.file.status === 'uploading') {
-      loading: true;
-      return;
-    }
-    if (info.file.status === 'done') {
-      setImage(info.file.originFileObj);
-      getBase64(info.file.originFileObj, (image) => {
-        loading: false;
-      });
-    }
-  };
+
 
 
 
@@ -169,6 +161,20 @@ function Products() {
     setIsModalOpen(true);
   }
 
+  const handleChange = (info) => {
+    if (info.file.status === 'uploading') {
+      loading: true;
+      return;
+    }
+    if (info.file.status === 'done') {
+      setImage(info.file.originFileObj);
+      getBase64(info.file.originFileObj, (image) => {
+        loading: false;
+      });
+    }
+  };
+
+
   const showModal = () => {
     setIsUpdate(false);
     setCurrentModel(null);
@@ -185,29 +191,31 @@ function Products() {
     setImage(null);
   };
 
+  const customRequest = async ({ file, onSuccess, onError }) => {
+    const token = localStorage.getItem('token');
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const response = await axios.post(`/api/images`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const { image_url, _id } = response.data.result;
+      setImageUrl(image_url)
+      setImageId(_id)
+
+      onSuccess(image_url, _id);
+    } catch (error) {
+      onError(error);
+    }
+  };
+
 
 
   const onFinish = async (values) => {
     setSubmitLoading(true);
-    const token = localStorage.getItem('token');
-    let imageUrl = image;
-
-    if (typeof image !== 'string') {
-      const formData = new FormData();
-      formData.append('image', image);
-      try {
-        const resp = await axios.post(`/api/images`, formData, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        imageUrl = resp.data.result.image_url;
-
-      } catch (error) {
-        console.error('Failed to upload image:', error);
-        message.error('Failed to upload image');
-        setSubmitLoading(false);
-        return;
-      }
-    }
+    const token = localStorage.getItem(IDA_TOKEN);
 
     if (isUpdate && currentModel) {
       const { brand_name, serial_number, company_name } = values;
@@ -220,6 +228,7 @@ function Products() {
         company_name,
         company_id: company?._id,
         image_url: imageUrl,
+        image_id: imageId
       };
 
       try {
@@ -250,6 +259,7 @@ function Products() {
         company_name,
         company_id: company?._id,
         image_url: imageUrl,
+        image_id: imageId
       };
 
       try {
@@ -468,6 +478,7 @@ function Products() {
                   className="avatar-uploader"
                   showUploadList={false}
                   beforeUpload={beforeUpload}
+                  customRequest={customRequest}
                   onChange={handleChange}
                 >
                   {image ? (
@@ -475,8 +486,8 @@ function Products() {
                   ) : (
                     uploadButton
                   )}
-
                 </Upload>
+
               </Form.Item>
               <Form.Item wrapperCol={{ offset: 10, span: 4 }}>
                 <Button

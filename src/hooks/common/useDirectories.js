@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useRouter } from 'next/router';
+import { IDA_TOKEN } from '@/constants/constant';
 
 export function useDirectories(url) {
   const [data, setData] = useState([]);
@@ -11,6 +12,13 @@ export function useDirectories(url) {
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10 });
   const [tableParams, setTableParams] = useState({ pagination: { current: 1, pageSize: 10 }, filters: {}, sorter: {} });
   const router = useRouter();
+
+  useEffect(() => {
+    const token = localStorage.getItem(IDA_TOKEN)
+    if (!token) {
+      router.replace('/')
+    }
+  })
 
   const fetchData = async (page, limit, filters = {}) => {
     setLoading(true);
@@ -29,11 +37,6 @@ export function useDirectories(url) {
       setLoading(false);
     }
   };
-
-
-
-
-
 
 
   useEffect(() => {

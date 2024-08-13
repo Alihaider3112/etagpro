@@ -1,1 +1,1 @@
-export const IDA_TOKEN = 'ida-token'
+export const IDA_TOKEN = 'token'
