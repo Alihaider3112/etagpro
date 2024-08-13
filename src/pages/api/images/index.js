@@ -24,6 +24,8 @@ const handler = async (req, res) => {
         console.error('Error parsing form data:', err);
         return res.status(500).json({ message: 'Error parsing form data', error: err.message });
       }
+
+      console.log('Fields:', _fields);
       console.log('Files parsed:', files);
 
       const image = files.image;
