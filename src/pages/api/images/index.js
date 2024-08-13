@@ -14,6 +14,7 @@ const handler = async (req, res) => {
   await connect();
 
   if (req.method === 'POST') {
+    await connect();
     const form = new IncomingForm();
     console.log('Form parsing started');
 
