@@ -18,7 +18,6 @@ function Models() {
   const [currentModel, setCurrentModel] = useState(null);
   const [form] = Form.useForm();
   const [filteredCompaniesData, setFilteredCompaniesData] = useState([]);
-  const { data: fetchedData} = useFetch('/api/brand');
   const { data: companiesData } = useFetch('/api/companies');
   const [deleteLoading, setDeleteLoading] = useState(false);
   const {
@@ -32,11 +31,11 @@ function Models() {
     filters,
     error,
   } = useDirectories('/api/brand');
- 
+
 
 
   useEffect(() => {
-    
+
     fetchData(pagination.current, pagination.pageSize, filters)
   }, [])
 
@@ -59,7 +58,7 @@ function Models() {
         },
       });
       setFilteredCompaniesData(response.data.result || []);
-      pagination:({ current: 1, pageSize: 10 });
+      pagination: ({ current: 1, pageSize: 10 });
     } catch (error) {
       console.error('Failed to fetch companies:', error);
     }
@@ -212,7 +211,7 @@ function Models() {
     },
   ];
 
-  
+
   return (
     <Protected>
       <>

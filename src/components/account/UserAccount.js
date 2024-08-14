@@ -1,5 +1,5 @@
 import Router from 'next/router'
-import { message,Button } from 'antd'
+import { message, Button } from 'antd'
 import { IDA_TOKEN } from '@/constants/constant'
 import MoreActions from '@/components/common/MoreActions'
 import UserAvatar from '@/components/common/UserAvatar'
@@ -29,7 +29,7 @@ function UserAccount() {
           onActionItemClick={async item => {
             const { key } = item
             if (key === 'Logout') {
-              localStorage.removeItem('token')
+              localStorage.removeItem(IDA_TOKEN)
               Router.push('/')
             } else {
               message.info('Coming soon. Stay tuned.')
