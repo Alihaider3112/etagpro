@@ -41,7 +41,6 @@ api.interceptors.response.use(
           query: { q: 'Unauthorized' },
         })
       } else if (status === 404) {
-        // not found
         Router.push({
           pathname: '/',
         })
