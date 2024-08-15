@@ -79,8 +79,7 @@ function UploadPage() {
       return;
     }
     if (info.file.status === 'done') {
-      setImageUrl(info.file.originFileObj);
-      getBase64(info.file.originFileObj, (image) => {
+      getBase64(info.file.originFileObj, () => {
         setLoading(false);
       });
     }
@@ -97,38 +96,39 @@ function UploadPage() {
     setImageUrl(null);
   };
 
-  const handleSubmit = async (values) => {
-    if (!imageUrl) {
-      message.error('Please upload an image before submitting.');
-      return;
-    }
-
-    setSubmitLoading(true);
-
+  const customRequest = async ({ file, onSuccess, onError }) => {
     const formData = new FormData();
-    formData.append('image', imageUrl);
+    formData.append('image', file);
 
     try {
-      const response = await axios.post(`/api/images`, formData, {
+      const response = await axios.post('/api/images', formData, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
 
-      setIsModalOpen(false);
-      form.resetFields();
+      onSuccess(response.data);
+      setImageUrl(response.data.result.image_url);
       setImagesData([...imagesData, {
         ...response.data.result,
         hasProduct: false
       }]);
-      setImageUrl(null);
-      message.success('Image Uploaded Successfully');
     } catch (error) {
+      onError(error);
       message.error('Failed to add image');
     } finally {
       setSubmitLoading(false);
     }
   };
+
+
+  const handleSubmit = () => {
+    message.success('Image Uploaded Successfully');
+    setIsModalOpen(false);
+    form.resetFields()
+    setImageUrl(null);
+
+  }
 
   const uploadButton = (
     <div>
@@ -325,9 +325,10 @@ function UploadPage() {
                 showUploadList={false}
                 beforeUpload={beforeUpload}
                 onChange={handleChange}
+                customRequest={customRequest}
               >
                 {imageUrl ? (
-                  <img src={URL.createObjectURL(imageUrl)} alt="avatar" style={{ width: '100%' }} />
+                  <img src={typeof imageUrl === 'string' ? imageUrl : URL.createObjectURL(imageUrl)} alt="avatar" style={{ width: '100%' }} />
                 ) : (
                   uploadButton
                 )}
