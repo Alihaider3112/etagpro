@@ -14,22 +14,15 @@ const handler = async (req, res) => {
   await connect();
 
   if (req.method === 'POST') {
-    await connect();
     const form = new IncomingForm();
-    console.log('Form parsing started');
 
     form.parse(req, async (err, _fields, files) => {
-      console.log('Inside form.parse callback');
       if (err) {
         console.error('Error parsing form data:', err);
         return res.status(500).json({ message: 'Error parsing form data', error: err.message });
       }
 
-      console.log('Fields:', _fields);
-      console.log('Files parsed:', files);
-
       const image = files.image;
-      console.log('no image  is uploaded', image);
 
       if (!image || (Array.isArray(image) && image.length === 0)) {
         return res.status(400).json({ message: 'No file uploaded or multiple files uploaded' });
