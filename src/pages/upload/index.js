@@ -227,10 +227,10 @@ function UploadPage() {
           pageTitle: 'Upload',
         }}
       />
-      <div className="w-11/12 m-auto justify-center mt-7">
+      <div className="w-full max-w-7xl mx-auto justify-center mt-7 px-4 sm:px-6 lg:px-8">
         <div className="flex mb-6 justify-end items-center">
           <Button
-            className="h-8 text-center p-auto"
+            className="h-10 px-4 py-2 text-center"
             type="primary"
             onClick={showModal}
             loading={submitLoading}
@@ -238,55 +238,33 @@ function UploadPage() {
             Upload Image
           </Button>
         </div>
-        <div className="h-11/12">
+        <div className="h-full">
           {imagesLoading ? (
             <div className="flex justify-center items-center h-full">
               <Spin size="large" />
             </div>
           ) : (
-            <Row>
+            <Row className="justify-center">
               {imagesData.length === 0 ? (
                 <div className="flex justify-center items-center w-full h-full">
                   <p>No images found.</p>
                 </div>
               ) : (
                 imagesData.map((img, index) => (
-                  <Col key={index} span={4}>
+                  <Col key={index} xs={12} sm={8} md={6} lg={4}>
                     <div
-                      className="relative mb-2 cursor-pointer"
-                      style={{
-                        width: '160px',
-                        height: '150px',
-                        overflow: 'hidden',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
+                      className="relative mb-2 cursor-pointer w-full h-40 flex items-center justify-center overflow-hidden"
                       onClick={() => showProductModal(img)}
                     >
                       {img.hasProduct && (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            background: 'rgba(0, 0, 0, 0.5)',
-                            color: 'white',
-                            padding: '2px 5px',
-                            zIndex: 1,
-                          }}
-                        >
+                        <div className="absolute top-0 left-0 bg-black bg-opacity-50 text-white px-2 py-1 z-10">
                           Product Added
                         </div>
                       )}
                       <img
                         src={img.image_url}
                         alt={`uploaded-${index}`}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                        }}
+                        className="w-full h-full object-cover"
                       />
                     </div>
                   </Col>
@@ -295,8 +273,9 @@ function UploadPage() {
             </Row>
           )}
         </div>
+
         <Modal
-          className="w-1/4 h-24 text-center"
+          className="w-1/3 max-w-sm xs:max-w-xs  sm:max-w-sm md:max-w-md lg:max-w-lg text-center"
           title="Upload Image"
           open={isModalOpen}
           onCancel={handleCancel}
@@ -305,15 +284,13 @@ function UploadPage() {
           <Form
             form={form}
             name="basic"
-            style={{ maxWidth: 300 }}
+            className="w-half"
             initialValues={{ remember: true }}
             onFinish={handleSubmit}
             autoComplete="off"
-            labelCol={{ span: 8 }}
-            wrapperCol={{ span: 16 }}
           >
             <Form.Item
-              wrapperCol={{ offset: 8, span: 9 }}
+              className="flex justify-center"
               rules={[
                 { validator: () => (imageUrl ? Promise.resolve() : Promise.reject('Please upload an image!')) },
               ]}
@@ -328,15 +305,87 @@ function UploadPage() {
                 customRequest={customRequest}
               >
                 {imageUrl ? (
-                  <img src={typeof imageUrl === 'string' ? imageUrl : URL.createObjectURL(imageUrl)} alt="avatar" style={{ width: '100%' }} />
+                  <img src={typeof imageUrl === 'string' ? imageUrl : URL.createObjectURL(imageUrl)} alt="avatar" className="w-full" />
                 ) : (
                   uploadButton
                 )}
+
               </Upload>
             </Form.Item>
-            <Form.Item wrapperCol={{ offset: 8, span: 4 }}>
+            <Form.Item className="flex justify-center mt-4">
               <Button
-                className="h-10 w-20"
+                className="h-10 w-full max-w-xs"
+                type="primary"
+                htmlType="submit"
+                style={{ border: 'none' }}
+                loading={submitLoading}
+              >
+                Submit
+              </Button>
+            </Form.Item>
+          </Form>
+        </Modal>
+
+        <Modal
+          className="w-1/2 max-w-md sm:max-w-sm md:max-w-md lg:max-w-lg text-center"
+          title="Add Product"
+          open={isProductOpen}
+          onCancel={handleCancel}
+          footer={null}
+        >
+          <Form
+            form={form}
+            name="basic"
+            title='Add Product'
+            className="max-w-1/3"
+            initialValues={{ remember: true }}
+            onFinish={handleSubmitProduct}
+            onFinishFailed={onFinishFailed}
+            autoComplete="off"
+          >
+            <Form.Item
+              label={<span className=" w-half text-sm sm:text-base">Company</span>}
+              name="company_name"
+              rules={[{ required: true, message: 'Select the company name!' }]}
+            >
+              <Select
+                showSearch
+                placeholder="Select Company name"
+                onSearch={fetchFilterCompany}
+                filterOption={false}
+                allowClear
+                options={filteredCompaniesData.map(company => ({ value: company.name, label: company.name }))}
+                onChange={(value) => form.setFieldsValue({ company_name: value })}
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={<span className="block w-full text-sm sm:text-base">Model</span>}
+              name="brand_name"
+              rules={[{ required: true, message: 'Select the model name!' }]}
+            >
+              <Select
+                showSearch
+                placeholder="Select Model name"
+                onSearch={fetchFilterBrand}
+                filterOption={false}
+                allowClear
+                options={filteredBrandsData.map(brand => ({ value: brand.name, label: brand.name }))}
+                onChange={(value) => form.setFieldsValue({ brand_name: value })}
+                className="w-full"
+              />
+            </Form.Item>
+
+            <Form.Item
+              label={<span className="block w-full text-sm sm:text-base">Sr.no</span>}
+              name="serial_number"
+              rules={[{ required: true, message: 'Please input the serial number!' }]}
+            >
+              <Input className="h-8 w-full" />
+            </Form.Item>
+            <Form.Item className="flex justify-center mt-4">
+              <Button
+                className="h-10 w-full max-w-xs"
                 type="primary"
                 htmlType="submit"
                 style={{ border: 'none' }}
@@ -348,76 +397,8 @@ function UploadPage() {
           </Form>
         </Modal>
       </div>
-
-      <Modal
-        className="w-1/3 h-24 text-center"
-        title="Add Product"
-        open={isProductOpen}
-        onCancel={handleCancel}
-        footer={null}
-      >
-        <Form
-          form={form}
-          name="basic"
-          style={{ maxWidth: 600 }}
-          initialValues={{ remember: true }}
-          onFinish={handleSubmitProduct}
-          onFinishFailed={onFinishFailed}
-          autoComplete="off"
-          labelCol={{ span: 8 }}
-          wrapperCol={{ span: 16 }}
-        >
-          <Form.Item
-            label={<span className="pt-1 block w-full">Company</span>}
-            name="company_name"
-            rules={[{ required: true, message: 'Select the company name!' }]}
-          >
-            <Select
-              showSearch
-              placeholder="Select Company name"
-              onSearch={fetchFilterCompany}
-              filterOption={false}
-              allowClear
-              options={filteredCompaniesData.map(company => ({ value: company.name, label: company.name }))}
-            />
-          </Form.Item>
-
-          <Form.Item
-            label={<span className="pt-1 block w-full">Model</span>}
-            name="brand_name"
-            rules={[{ required: true, message: 'Select the model name!' }]}
-          >
-            <Select
-              showSearch
-              placeholder="Select Model name"
-              onSearch={fetchFilterBrand}
-              filterOption={false}
-              allowClear
-              options={filteredBrandsData.map(brand => ({ value: brand.name, label: brand.name }))}
-            />
-          </Form.Item>
-
-          <Form.Item
-            label={<span className="pt-1 block w-full">Sr.no</span>}
-            name="serial_number"
-            rules={[{ required: true, message: 'Please input the serial number!' }]}
-          >
-            <Input className="h-8" />
-          </Form.Item>
-          <Form.Item wrapperCol={{ offset: 10, span: 4 }}>
-            <Button
-              className="h-10 w-20"
-              type="primary"
-              htmlType="submit"
-              style={{ border: 'none' }}
-              loading={submitLoading}
-            >
-              Submit
-            </Button>
-          </Form.Item>
-        </Form>
-      </Modal>
     </Protected>
+
   );
 }
 
