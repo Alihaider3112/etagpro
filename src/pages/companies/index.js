@@ -8,7 +8,7 @@ import withAuth from '@/hooks/common/withauth';
 import { useRouter } from 'next/router';
 
 function Companies() {
-  const router = useRouter()
+  const router = useRouter();
   const [form] = Form.useForm();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const {
@@ -19,15 +19,11 @@ function Companies() {
     loading,
     totalCount,
     pagination,
-
-  } = useDirectories(`/api/companies`)
+  } = useDirectories(`/api/companies`);
 
   useEffect(() => {
-    fetchData(pagination.current, pagination.pageSize)
-  }, [])
-
-
-
+    fetchData(pagination.current, pagination.pageSize);
+  }, []);
 
   const addCompany = async (company) => {
     try {
@@ -39,18 +35,17 @@ function Companies() {
       });
 
       const newDataSource = [...data, response.data.result];
-      data: newDataSource
+      data: newDataSource;
 
       setIsModalOpen(false);
       form.resetFields();
-      fetchData(pagination.current, pagination.pageSize)
+      fetchData(pagination.current, pagination.pageSize);
       message.success('Company added successfully');
     } catch (error) {
       console.error('Failed to add company:', error);
       message.error('Failed to add company');
     }
   };
-
 
   const showModal = () => {
     setIsModalOpen(true);
@@ -84,9 +79,9 @@ function Companies() {
             pageTitle: 'Companies',
           }}
         />
-        <div className="w-11/12 m-auto justify-center mt-7 w-full">
-          <div className="flex mb-6 justify-end items-center">
-            <Button className="h-8 text-center p-auto" onClick={showModal} type="primary">
+        <div className="w-11/12 mx-auto mt-7">
+          <div className=" flex justify-end items-center mb-6">
+            <Button className=" px-4 py-2 h-8 text-center p-0" onClick={showModal} type="primary">
               Create Company
             </Button>
           </div>
@@ -98,32 +93,40 @@ function Companies() {
               current: pagination.current,
               pageSize: pagination.pageSize,
               total: totalCount,
-
             }}
             onChange={handleTableChange}
             loading={loading}
-            rowKey="_id" />
-          <Modal className='w-1/3 h-24 text-center ' title="Add Company" open={isModalOpen} onCancel={() => setIsModalOpen(false)} footer={null}>
+            rowKey="_id"
+            className="overflow-x-auto"
+          />
+
+          <Modal
+            className="max-w-half xs:max-w-xs sm:max-w-sm"
+            title="Add Company"
+            open={isModalOpen}
+            onCancel={() => setIsModalOpen(false)}
+            footer={null}
+            centered
+          >
             <Form
               form={form}
               name="basic"
-              style={{ maxWidth: 600 }}
+              className="w-half"
               initialValues={{ remember: true }}
               onFinish={onFinish}
               onFinishFailed={onFinishFailed}
               autoComplete="off"
-              labelCol={{ span: 8 }}
-              wrapperCol={{ span: 16 }}
             >
               <Form.Item
                 label="Company"
                 name="name"
                 rules={[{ required: true, message: 'Please input the company name!' }]}
+                className="flex flex-col"
               >
                 <Input />
               </Form.Item>
-              <Form.Item wrapperCol={{ offset: 10, span: 4 }}>
-                <Button className="h-10 w-20" type="primary" htmlType="submit" style={{ border: 'none' }}>
+              <Form.Item className="flex justify-center">
+                <Button className="h-10 w-24" type="primary" htmlType="submit">
                   Submit
                 </Button>
               </Form.Item>
@@ -137,4 +140,4 @@ function Companies() {
 
 Companies.getLayout = (page) => <Protected>{page}</Protected>;
 Companies.pageTitle = 'Companies';
-export default withAuth(Companies)
+export default withAuth(Companies);
