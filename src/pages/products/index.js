@@ -38,6 +38,7 @@ function Products() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filteredBrandsData, setFilteredBrandsData] = useState([]);
   const [filteredCompaniesData, setFilteredCompaniesData] = useState([]);
+  const [selectedCompanyId, setSelectedCompanyId] = useState(null);
   const [isUpdate, setIsUpdate] = useState(false);
   const [image, setImage] = useState('');
   const [imageUrl, setImageUrl] = useState(null);
@@ -337,21 +338,32 @@ function Products() {
       console.error('Failed to fetch brands:', error);
     }
   }
-
   const fetchFilterBrand = async (search) => {
-    if (!search) return;
+    if (!search || !selectedCompanyId) return;
     try {
       const token = localStorage.getItem('token');
-      const response = await axios.get(`/api/brand?search=${search}`, {
+      const response = await axios.get(`/api/brand?search=${search}&company_id=${selectedCompanyId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
       setFilteredBrandsData(response.data.result || []);
+      fetchData(1, 10, { ...filters, brand_name: search });
     } catch (error) {
       console.error('Failed to fetch brands:', error);
     }
-  }
+  };
+  const handleCompanyChange = (value) => {
+    setSelectedCompanyId(value);
+    if (value) {
+      const filteredModels = brandsData.filter(model => model.company_id === value);
+      setFilteredBrandsData(filteredModels);
+    } else {
+      setFilteredBrandsData(brandsData);
+    }
+    form.setFieldsValue({ brand_name: null });
+  };
+
 
   if (brandsLoading || companiesLoading) return <p>Loading...</p>;
 
@@ -362,12 +374,13 @@ function Products() {
           TopBarContent={{
             pageTitle: 'Products',
           }}
+          className="text-center sm:text-left lg:text-center"
         />
-        <div className="w-11/12 m-auto justify-center mt-7">
-          <div className="grid grid-cols-4 gap-3">
+        <div className="w-11/12 mx-auto justify-center mt-7 lg:w-11/12 md:w-11/12 sm:w-full">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             <div>
               <Select
-                className="w-64"
+                className="w-full lg:w-64 md:w-full sm:w-full"
                 showSearch
                 placeholder="Select Company name"
                 onSearch={fetchFilteredCompanies}
@@ -377,9 +390,10 @@ function Products() {
                 options={filteredCompaniesData.map(company => ({ value: company.name, label: company.name }))}
               />
             </div>
+
             <div>
               <Select
-                className="w-64"
+                className="w-full lg:w-64 md:w-full sm:w-full"
                 showSearch
                 placeholder="Select Model name"
                 onSearch={fetchFilteredBrands}
@@ -389,15 +403,17 @@ function Products() {
                 options={filteredBrandsData.map(brand => ({ value: brand.name, label: brand.name }))}
               />
             </div>
+
             <div>
               <Input
-                className="h-8 text-center rounded-md"
+                className="h-8 text-center rounded-md w-full lg:w-64 md:w-full sm:w-full"
                 placeholder="Serial number"
                 onChange={(e) => handleFilterChange({ serial_number: e.target.value })}
               />
             </div>
-            <div className="flex mb-6 justify-end items-center">
-              <Button className="h-8 text-center p-auto" onClick={showModal} type="primary">
+
+            <div className="flex justify-end items-center mb-6">
+              <Button className="h-10 w-full lg:w-40 sm:w-full" onClick={showModal} type="primary">
                 Create Product
               </Button>
             </div>
@@ -412,23 +428,29 @@ function Products() {
             }}
             onChange={handleTableChange}
             rowKey="_id"
+
           />
 
-          <Modal className="w-1/3 h-24 text-center" title="Add Product" open={isModalOpen} onCancel={handleCancel} footer={null}>
+          <Modal
+            className="w-1/3 h-24  max-w-lg sm:max-w-xs md:max-w-md lg:max-w-2xl text-center"
+            title="Add Product"
+            open={isModalOpen}
+            onCancel={handleCancel}
+            footer={null}
+          >
             <Form
               form={form}
               name="basic"
               title={isUpdate ? 'Update Model' : 'Add a New Model'}
-              style={{ maxWidth: 600 }}
+              className="max-w-1/3"
               initialValues={{ remember: true }}
               onFinish={onFinish}
               onFinishFailed={onFinishFailed}
               autoComplete="off"
-              labelCol={{ span: 8 }}
-              wrapperCol={{ span: 16 }}
+
             >
               <Form.Item
-                label={<span className="pt-1 block w-full">Company</span>}
+                label={<span className=" w-half text-sm sm:text-base">Company</span>}
                 name="company_name"
                 rules={[{ required: true, message: 'Select the company name!' }]}
               >
@@ -438,13 +460,13 @@ function Products() {
                   onSearch={fetchFilterCompany}
                   filterOption={false}
                   allowClear
-                  options={filteredCompaniesData.map(company => ({ value: company.name, label: company.name }))}
-                  onChange={(value) => form.setFieldsValue({ company_name: value })}
+                  options={filteredCompaniesData.map(company => ({ value: company._id, label: company.name }))}
+                  onChange={handleCompanyChange}
                 />
               </Form.Item>
 
               <Form.Item
-                label={<span className="pt-1 block w-full">Model</span>}
+                label={<span className="block w-full text-sm sm:text-base">Model</span>}
                 name="brand_name"
                 rules={[{ required: true, message: 'Select the model name!' }]}
               >
@@ -455,19 +477,21 @@ function Products() {
                   filterOption={false}
                   allowClear
                   options={filteredBrandsData.map(brand => ({ value: brand.name, label: brand.name }))}
-                  onChange={(value) => form.setFieldsValue({ brand_name: value })}
+                  className="w-full"
                 />
               </Form.Item>
 
+
               <Form.Item
-                label={<span className="pt-1 block w-full">Sr.no</span>}
+                label={<span className="block w-full text-sm sm:text-base">Sr.no</span>}
                 name="serial_number"
                 rules={[{ required: true, message: 'Please input the serial number!' }]}
               >
-                <Input className="h-8" />
+                <Input className="h-8 w-full" />
               </Form.Item>
+
               <Form.Item
-                wrapperCol={{ offset: 8, span: 9 }}
+                className="flex justify-center"
                 rules={[
                   { validator: () => (image ? Promise.resolve() : Promise.reject('Please upload an image!')) },
                 ]}
@@ -482,24 +506,31 @@ function Products() {
                   onChange={handleChange}
                 >
                   {image ? (
-                    <img src={typeof image === 'string' ? image : URL.createObjectURL(image)} alt="avatar" style={{ width: '100%' }} />
+                    <img
+                      src={typeof image === 'string' ? image : URL.createObjectURL(image)}
+                      alt="avatar"
+                      className="w-full h-auto"
+                    />
                   ) : (
                     uploadButton
                   )}
                 </Upload>
-
               </Form.Item>
-              <Form.Item wrapperCol={{ offset: 10, span: 4 }}>
+
+              <Form.Item className="flex justify-center mt-4">
                 <Button
-                  className="h-10 w-20"
+                  className="h-10 w-full "
                   type="primary"
                   htmlType="submit"
-                  loading={submitLoading} style={{ border: 'none' }}>
+                  style={{ border: 'none' }}
+                  loading={submitLoading}
+                >
                   Submit
                 </Button>
               </Form.Item>
             </Form>
           </Modal>
+
         </div>
       </>
     </Protected>

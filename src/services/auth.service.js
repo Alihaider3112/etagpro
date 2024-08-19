@@ -1,7 +1,7 @@
 import useApiService from '@/services/api.service'
 
 export function useAuthService() {
-  const apiService = useApiService() // simple axios
+  const apiService = useApiService()
 
   const login = async ({ email, password }) => apiService.post({
     url: '/login',

@@ -220,9 +220,11 @@ function Models() {
             pageTitle: 'Models',
           }}
         />
-        <div className="w-11/12 m-auto justify-center mt-7">
+        <div className="w-full mx-auto justify-center mt-7 px-4 sm:px-6 lg:px-8">
           <div className="flex mb-6 justify-end items-center">
-            <Button className='h-8 text-center p-auto' onClick={showModal} type='primary'>Add New Model</Button>
+            <Button className="h-10 px-4 py-2 text-center" onClick={showModal} type="primary">
+              Add New Model
+            </Button>
           </div>
           <Table
             dataSource={data}
@@ -235,10 +237,12 @@ function Models() {
             }}
             onChange={handleTableChange}
             loading={loading}
+            className="w-full"
           />
         </div>
+
         <Modal
-          className='w-1/3 h-24 text-center'
+          className="w-1/3 max-w-md xs:max-w-xs sm:max-w-xs md:max-w-md lg:max-w-lg text-center"
           title={isUpdate ? 'Update Model' : 'Add a New Model'}
           open={isModalOpen}
           onCancel={handleCancel}
@@ -247,24 +251,23 @@ function Models() {
           <Form
             form={form}
             name="basic"
-            style={{ maxWidth: 600 }}
+            className="w-half"
             initialValues={{ remember: true }}
             onFinish={onFinish}
             onFinishFailed={onFinishFailed}
             autoComplete="off"
-            labelCol={{ span: 8 }}
-            wrapperCol={{ span: 16 }}
+
           >
             <Form.Item
-              label={<span className="pt-1 block w-full">Model</span>}
+              label={<span className="flex w-half text-sm sm:text-base">Model</span>}
               name="name"
               rules={[{ required: true, message: 'Please input the model name!' }]}
             >
-              <Input className='h-8' />
+              <Input className="h-10 w-half flex" />
             </Form.Item>
 
             <Form.Item
-              label={<span className="pt-1 block w-full">Company</span>}
+              label={<span className="flex w-half text-sm sm:text-base">Company</span>}
               name="company_name"
               rules={[{ required: true, message: 'Please select the company!' }]}
             >
@@ -275,15 +278,13 @@ function Models() {
                 filterOption={false}
                 onSearch={fetchFilteredCompanies}
                 options={filteredCompaniesData.map(company => ({ value: company.name, label: company.name }))}
+                className="flex w-half"
                 onChange={(value) => form.setFieldsValue({ company_name: value })}
               />
-
             </Form.Item>
 
-            <Form.Item
-              wrapperCol={{ offset: 10, span: 4 }}
-            >
-              <Button className='h-10 w-20' type="primary" htmlType="submit" style={{ border: 'none' }}>
+            <Form.Item className="flex justify-center mt-4">
+              <Button className="h-10 w-full max-w-xs" type="primary" htmlType="submit" style={{ border: 'none' }}>
                 Submit
               </Button>
             </Form.Item>
@@ -294,12 +295,19 @@ function Models() {
           title="Delete Model"
           open={model}
           onCancel={handleCancel}
-          width={400}
+          className="w-half max-w-sm text-center"
           footer={[
-            <Button key="cancel" onClick={handleCancel} style={{ width: '80px', height: '32px' }}>
+            <Button key="cancel" onClick={handleCancel} className="w-20 h-10">
               Cancel
             </Button>,
-            <Button key="ok" type="primary" danger onClick={() => handleRemove(modelToDeleteId)} style={{ width: '80px', height: '32px' }} loading={deleteLoading}>
+            <Button
+              key="ok"
+              type="primary"
+              danger
+              onClick={() => handleRemove(modelToDeleteId)}
+              className="w-20 h-10"
+              loading={deleteLoading}
+            >
               OK
             </Button>,
           ]}
@@ -308,6 +316,7 @@ function Models() {
         </Modal>
       </>
     </Protected>
+
   );
 }
 

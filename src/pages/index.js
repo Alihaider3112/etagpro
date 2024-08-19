@@ -1,5 +1,5 @@
 
-import { Button, Form, Input } from 'antd';
+import { Button, Form, Input, Typography } from 'antd';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Account from '@/layouts/Account';
@@ -7,6 +7,7 @@ import Public from '@/layouts/Public';
 import { showNotification } from '@/constants/utils';
 import LucideIcon from '@/components/common/LucideIcon';
 import axios from 'axios';
+import { IDA_TOKEN } from '@/constants/constant';
 
 export default function Login() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function Login() {
     setLoader(true);
     try {
       const response = await axios.post('/api/login/', { email, password });
-      localStorage.setItem('token', response.data.token);
+      localStorage.setItem(IDA_TOKEN, response.data.token);
       router.replace('/products');
       showNotification('Logged in Successfully', '', { type: 'success' });
     } catch (error) {
@@ -102,6 +103,16 @@ export default function Login() {
       >
         Log In
       </Button>
+
+      <Form.Item
+        className='mt-2 text-center'>
+        <Typography.Text>
+          Don&apos;t have an account?{' '}
+          <Typography.Link href="/signup">
+            Sign Up
+          </Typography.Link>
+        </Typography.Text>
+      </Form.Item>
     </Form>
   );
 }
